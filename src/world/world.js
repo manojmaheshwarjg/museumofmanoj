@@ -613,8 +613,10 @@ export function createWorld(canvas) {
       // Hold back on the landing while he says "After you", then walk in once he has stepped out of the way.
       { y: at(0.84), pos: [16.6, 2.22, -200], look: [28, 2.4, -200] },
       { y: at(0.88), pos: [17.6, 2.2, -200], look: [29, 2.45, -200] },
-      { y: at(0.93), pos: [21.0, 2.15, -200], look: [31, 2.5, -200] },
-      { y: at(0.97), pos: [20.4, 2.1, -200], look: [34, 2.2, -200] },
+      // Every step of this has to move forward. Lower the last key without checking the one before it and the
+      // camera backs up before going in, which reads as the museum sliding out of frame and returning.
+      { y: at(0.93), pos: [19.2, 2.15, -200], look: [31, 2.5, -200] },
+      { y: at(0.97), pos: [20.8, 2.1, -200], look: [34, 2.2, -200] },
       // Through the doors and into the vestibule. From here the frame is nothing but paper, so the welcome
       // section can take the screen with no edge to see.
       { y: s0 + span, pos: [23.4, 2.05, -200], look: [34, 2, -200] },
