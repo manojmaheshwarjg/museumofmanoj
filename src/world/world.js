@@ -28,8 +28,11 @@ const LANES = [-6.75, -2.25, 2.25, 6.75];
 export function createWorld(canvas) {
   const small = matchMedia('(max-width: 719px), (pointer: coarse)').matches;
   const rnd = T.seeded(11);
-  const renderer = new WebGLRenderer({ canvas, antialias: !small, alpha: true, stencil: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, small ? 1.5 : 2));
+  const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, stencil: true, powerPreference: 'high-performance' });
+  // Phones render at their own pixel ratio. Capping at 1.5 on a screen that reports 3 meant drawing a quarter of
+  // the pixels and letting the browser stretch the result, which is what made the city look soft.
+  const ratio = Math.min(window.devicePixelRatio || 1, small ? 3 : 2);
+  renderer.setPixelRatio(ratio);
   renderer.setClearColor(0x000000, 0);
   const scene = new Scene();
   scene.fog = new Fog(T.NIGHT, 140, 900);
@@ -112,7 +115,7 @@ export function createWorld(canvas) {
   // Behind Fifth Avenue: Madison and Park Avenue towers, merged into one mesh so they cost one draw call.
   const towerParts = [];
   const beacon = new SpriteMaterial({ map: T.poolTexture(), color: '#FF5040', transparent: true, blending: AdditiveBlending, depthWrite: false });
-  for (let row = 0; row < (small ? 2 : 3); row++) {
+  for (let row = 0; row < 3; row++) {
     for (let z = 250; z > -640;) {
       const w = 16 + rnd() * 24;
       const d = 18 + rnd() * 24;
@@ -143,11 +146,16 @@ export function createWorld(canvas) {
   // West side: the Central Park wall and its trees.
   put(box(0.7, 1.1, 1200, -14.7, 0.55, -150, mat.dark));
   const treeTextures = [1, 2, 3].map((s) => T.treeTexture(s * 17));
-  for (let i = 0; i < (small ? 34 : 70); i++) {
+  for (let i = 0; i < 70; i++) {
     const h = 8 + rnd() * 7;
+    const tx = -17.5 - rnd() * 56;
+    const tz = 230 - rnd() * 700;
+    // The opening shot on a phone looks down over this corner of the park, where a clump of trees sits right on
+    // top of the scroll cue. Draw the rest of the park as it was.
+    if (small && tx < -30 && tx > -76 && tz > -30 && tz < 15) continue;
     const tree = new Sprite(new SpriteMaterial({ map: treeTextures[i % 3], transparent: true, alphaTest: 0.2 }));
     tree.scale.set(h, h, 1);
-    tree.position.set(-17.5 - rnd() * 56, h / 2 - 0.4, 230 - rnd() * 700);
+    tree.position.set(tx, h / 2 - 0.4, tz);
     city.add(tree);
   }
 
@@ -293,7 +301,7 @@ export function createWorld(canvas) {
   put(box(2.9, 0.14, 4.3, 18.4, 3.07, -178.65, mat.dark));
   put(box(0.3, 0.9, 3.2, 17.9, 3.6, -178, [mat.dark, signFace, mat.dark, mat.dark, mat.dark, mat.dark]));
   flat(6, 6, 16.4, -178, 0.06, mat.pool);
-  const doorInk = new LineMaterial({ color: T.PAPER, linewidth: small ? 1.2 : 1.5, worldUnits: false, transparent: true, opacity: 0.9, fog: true });
+  const doorInk = new LineMaterial({ color: T.PAPER, linewidth: 1.5, worldUnits: false, transparent: true, opacity: 0.9, fog: true });
   const sideDoor = new Group();
   sideDoor.position.set(17.36, 0, -180.3);
   const doorLeaf = box(0.05, 2.15, 0.9, 0, 1.075, 0.45, [mat.dark, face(guideDoor.leaf), mat.dark, mat.dark, mat.dark, mat.dark]);
@@ -321,17 +329,17 @@ export function createWorld(canvas) {
   west.rotation.y = Math.PI / 2;
   city.add(west);
   const stars = [];
-  for (let i = 0; i < (small ? 240 : 460); i++) {
+  for (let i = 0; i < 460; i++) {
     const theta = rnd() * Math.PI * 2;
     const phi = 0.12 + rnd() * 0.75;
     stars.push(Math.cos(theta) * Math.cos(phi) * 1400, 160 + Math.sin(phi) * 800, Math.sin(theta) * Math.cos(phi) * 1400 - 300);
   }
   const starGeometry = new BufferGeometry();
   starGeometry.setAttribute('position', new Float32BufferAttribute(stars, 3));
-  city.add(new Points(starGeometry, new PointsMaterial({ color: T.PAPER, size: small ? 2 : 1.6, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.7 })));
+  city.add(new Points(starGeometry, new PointsMaterial({ color: T.PAPER, size: (small ? 1.33 : 0.8) * ratio, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.7 })));
 
   // Ink: every edge of the static city, drawn as fat lines in three jittered versions.
-  const ink = new LineMaterial({ color: T.PAPER, linewidth: small ? 1.3 : 1.6, worldUnits: false, transparent: true, opacity: 0.9, fog: true });
+  const ink = new LineMaterial({ color: T.PAPER, linewidth: 1.6, worldUnits: false, transparent: true, opacity: 0.9, fog: true });
   const segments = [];
   const v = new Vector3();
   inked.forEach((mesh) => {
@@ -358,10 +366,10 @@ export function createWorld(canvas) {
   const museum = buildMuseum({ city });
 
   // Cabs, all heading downtown (Fifth Avenue runs one way, south).
-  const carInk = new LineMaterial({ color: T.PAPER, linewidth: small ? 1.2 : 1.5, worldUnits: false, transparent: true, opacity: 0.85, fog: true });
+  const carInk = new LineMaterial({ color: T.PAPER, linewidth: 1.5, worldUnits: false, transparent: true, opacity: 0.85, fog: true });
   const glow = new SpriteMaterial({ map: T.poolTexture(), color: '#FFE6BA', transparent: true, blending: AdditiveBlending, depthWrite: false, opacity: 0.9 });
   const cars = [];
-  for (let i = 0; i < (small ? 5 : 9); i++) {
+  for (let i = 0; i < 9; i++) {
     const car = new Group();
     const body = box(1.9, 1.1, 4.6, 0, 0.75, 0, mat.dark);
     const cabin = box(1.7, 0.8, 2.3, 0, 1.7, 0.15, mat.dark);
@@ -385,7 +393,7 @@ export function createWorld(canvas) {
   // People on both sidewalks, two walking frames each.
   const sheet = T.walkerSheet();
   const walkers = [];
-  for (let i = 0; i < (small ? 26 : 48); i++) {
+  for (let i = 0; i < 48; i++) {
     const map = sheet.texture.clone();
     map.repeat.set(1 / sheet.variants, 1 / sheet.frames);
     map.offset.set((i % sheet.variants) / sheet.variants, 0.5);
@@ -475,6 +483,9 @@ export function createWorld(canvas) {
       tmp.subVectors(pos, look).setY(0).normalize();
       pos.addScaledVector(tmp, 3.4 * arrive);
       look.y -= 2.9 * arrive + 18 * early;
+      // The visitor billboard spans the avenue, too wide for this slice of it. Turn to read it on the way past.
+      const g = Math.max(0, 1 - Math.abs(progress - 0.28) / 0.13);
+      look.x += 14 * g * g * (3 - 2 * g);
     }
     // The camera breathes on the street, and settles as it reaches the doors.
     const sway = 1 - arrive * 0.85;
