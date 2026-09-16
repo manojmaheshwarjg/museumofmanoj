@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Museum of Manoj · Manoj Maheshwar Jagadeesan</title>
+  <meta name="description" content="Walk through the Museum of Manoj: one life from Chennai to New York, told room by room. Product, design engineering, growth and AI.">
+  <meta name="theme-color" content="#070706">
+  <meta property="og:title" content="Museum of Manoj">
+  <meta property="og:description" content="A 15-minute walk through one life, from Chennai to New York.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Caveat:wght@500;700&family=Doto:wght@700;900&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
+  <link rel="stylesheet" href="/src/styles/base.css">
+  <link rel="stylesheet" href="/src/styles/scenes.css">
+  <link rel="stylesheet" href="/src/styles/rooms.css">
+</head>
+<body data-mode="full">
+  <svg id="fx-defs" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- Line boil: the turbulence seed changes a few times a second so drawn lines breathe -->
+      <filter id="boil" x="-8%" y="-8%" width="116%" height="116%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="1" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <!-- Paper cutout: a thick paper edge and a hard offset shadow, like a pop-up book -->
+      <filter id="cutout" x="-20%" y="-20%" width="140%" height="140%">
+        <feMorphology in="SourceAlpha" operator="dilate" radius="5" result="fat"/>
+        <feFlood flood-color="#F1EDE3" result="paperFill"/>
+        <feComposite in="paperFill" in2="fat" operator="in" result="edge"/>
+        <feOffset in="fat" dx="6" dy="7" result="offset"/>
+        <feFlood flood-color="#000" flood-opacity=".38"/>
+        <feComposite in2="offset" operator="in" result="shadow"/>
+        <feMerge><feMergeNode in="shadow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <pattern id="ht-ink" width="5" height="5" patternUnits="userSpaceOnUse"><circle cx="2.5" cy="2.5" r="1.25" fill="#0E0D0B"/></pattern>
+      <pattern id="ht-ink-fine" width="3.5" height="3.5" patternUnits="userSpaceOnUse"><circle cx="1.75" cy="1.75" r=".8" fill="#0E0D0B"/></pattern>
+      <pattern id="ht-paper" width="5" height="5" patternUnits="userSpaceOnUse"><circle cx="2.5" cy="2.5" r="1.25" fill="#F1EDE3"/></pattern>
+      <pattern id="hatch-ink" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V6" stroke="#0E0D0B" stroke-width="1.3"/></pattern>
+      <pattern id="hatch-paper" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V6" stroke="#F1EDE3" stroke-width="1.3"/></pattern>
+    </defs>
+  </svg>
+
+  <div class="grain" aria-hidden="true"></div>
+  <div class="progress-rail" aria-hidden="true"><i></i></div>
+
+  <header class="hud">
+    <a class="hud__brand" href="#plaza" aria-label="Museum of Manoj, back to Fifth Avenue"><span class="logo" aria-hidden="true"><span>MUSEUM</span><span class="logo__of">of</span><span>MANOJ</span></span></a>
+    <span class="hud__visitor mono">visitor <span data-visitor>#--,---</span></span>
+    <button class="hud__menu mono" type="button" aria-controls="directory" aria-expanded="false">Directory</button>
+  </header>
+
+  <div class="directory" id="directory" role="dialog" aria-modal="true" aria-label="Floor directory">
+    <div class="directory__board">
+      <div class="mono" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <span>Floor directory · Museum of Manoj</span>
+        <button class="mono" type="button" data-close style="background:none;border:1.5px solid currentColor;border-radius:999px;padding:6px 12px;cursor:pointer">Close</button>
+      </div>
+      <ol data-directory></ol>
+    </div>
+  </div>
+
+  <aside class="dock-ticket" aria-label="Your ticket" data-dock-ticket></aside>
+
+  <main id="tour">
+    <section class="scene scene--arrival" id="plaza" aria-label="Fifth Avenue and the ticket booth"></section>
+    <section class="scene scene--walk" id="walk" aria-hidden="true"></section>
+    <section class="scene scene--steps" id="steps" aria-label="Meet your guide"></section>
+    <section class="scene scene--lobby" id="lobby" aria-label="The lobby"></section>
+    <div id="rooms"></div>
+  </main>
+
+  <noscript>
+    <div class="noscript">
+      <h1>Museum of Manoj</h1>
+      <p>This museum needs JavaScript to walk you through it. In short: Manoj Maheshwar Jagadeesan is a curious, ambitious builder, from Chennai to New York. M.S. in Artificial Intelligence from the University at Buffalo, product manager at Favcy and VivPro, founder of two product studios, and builder of SnapInfra, RebateOS, ScootPie and Rho Desk. Say hi: manojmaheshwarjg@gmail.com</p>
+    </div>
+  </noscript>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
