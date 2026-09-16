@@ -20,7 +20,7 @@ export const panelHTML = () => `
       <legend class="sr-only">How long do you want to stay?</legend>
       <label class="mode"><input type="radio" name="mode" value="full" checked><span class="mode__card"><b>Full tour</b><span class="mono">about 15 min · every room</span></span></label>
       <label class="mode"><input type="radio" name="mode" value="express"><span class="mode__card"><b>Express</b><span class="mono">about 3 min · the highlights</span></span></label>
-      <label class="mode"><input type="radio" name="mode" value="resume"><span class="mode__card"><b>Just the resume</b><span class="mono">straight to the gift shop</span></span></label>
+      <label class="mode"><input type="radio" name="mode" value="resume"><span class="mode__card"><b>Resume</b><span class="mono">straight to the gift shop</span></span></label>
     </fieldset>
     <label class="booth__name">
       <span class="mono">Name on your ticket (optional)</span>
