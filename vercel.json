@@ -1,0 +1,6 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/experience/:slug", "destination": "/index.html" }
+  ]
+}

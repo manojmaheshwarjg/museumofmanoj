@@ -146,7 +146,7 @@ export const WINGS = {
           </article>`).join('')}
       </div>`,
 
-    init: (el, room, { kit, quiet }) => {
+    init: (el, room, { kit, quiet, onDispose }) => {
       const tone = room.tone;
 
       // Nano's aquarium
@@ -251,6 +251,7 @@ export const WINGS = {
         px.addEventListener('pointermove', follow);
         px.addEventListener('pointerdown', follow);
         addEventListener('resize', home);
+        onDispose?.(() => removeEventListener('resize', home));
         requestAnimationFrame(home);
         ScrollTrigger.create({ trigger: px, start: 'top bottom', once: true, onEnter: home });
       }

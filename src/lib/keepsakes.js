@@ -141,10 +141,10 @@ async function ticketCopy() {
 
 async function resumeFile() {
   try {
-    const res = await fetch('resume.pdf', { method: 'HEAD' });
+    const res = await fetch('/resume.pdf', { method: 'HEAD' });
     if (!res.ok || !(res.headers.get('content-type') || '').includes('pdf')) return false;
   } catch { return false; }
-  const link = Object.assign(document.createElement('a'), { href: 'resume.pdf', download: 'manoj-maheshwar-jagadeesan-resume.pdf' });
+  const link = Object.assign(document.createElement('a'), { href: '/resume.pdf', download: 'manoj-maheshwar-jagadeesan-resume.pdf' });
   document.body.appendChild(link);
   link.click();
   link.remove();

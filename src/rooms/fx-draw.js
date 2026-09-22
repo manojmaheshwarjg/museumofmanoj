@@ -103,12 +103,14 @@ export const FX = {
     whileVisible(beat, () => wave.play(), () => wave.pause());
   },
 
-  clocks: (beat) => {
+  clocks: (beat, { onDispose } = {}) => {
     let timer = 0;
     whileVisible(beat, () => {
       paintClocks(beat);
       clearInterval(timer);
       timer = setInterval(() => paintClocks(beat), 20000);
     }, () => clearInterval(timer));
+    // Moving on to another stop: the clocks stop with it.
+    onDispose?.(() => clearInterval(timer));
   },
 };

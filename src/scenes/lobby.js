@@ -7,6 +7,7 @@ import { sketcher, el, INK, PAPER, reducedMotion } from '../lib/doodle.js';
 import { mountManoj } from '../character/manoj.js';
 import { state, punch, ROOM_COUNT } from '../lib/state.js';
 import { STOPS } from '../content/tour.js';
+import { pathFor } from '../lib/routes.js';
 import { eggButtonsHTML } from '../world/eggs.js';
 
 const pad2 = (n) => String(n).padStart(2, '0');
@@ -53,14 +54,14 @@ export function init() {
         <nav class="lobby__board" aria-label="Stops on the tour">
           <div class="lobby__board-head dotf"><span>FLOOR DIRECTORY</span><span>TIME</span></div>
           <ol>${rooms.map((r) => `
-            <li><a href="#${r.id}" data-go="#${r.id}"><span>${r.no}</span><span>${r.title}</span><span class="lobby__time">${r.time}</span></a></li>`).join('')}
+            <li><a href="${pathFor(r.id)}"><span>${r.no}</span><span>${r.title}</span><span class="lobby__time">${r.time}</span></a></li>`).join('')}
           </ol>
         </nav>
 
         <div class="lobby__cta">
           <p class="lobby__note" data-note ${note ? '' : 'hidden'}>${note}</p>
-          <a class="btn btn--ink" href="#room-02" data-go="#room-02">Begin the tour</a>
-          <a class="mono lobby__skip" href="#room-12" data-go="#room-12">or skip to the gift shop</a>
+          <a class="btn btn--ink" href="${pathFor('room-02')}">Begin the tour</a>
+          <a class="mono lobby__skip" href="${pathFor('room-12')}">or skip to the gift shop</a>
         </div>
         ${eggButtonsHTML('lobby')}
 

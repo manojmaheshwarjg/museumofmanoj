@@ -139,7 +139,7 @@ const giftHTML = () => `
     <p class="mono">The gift shop</p>
     <h3 class="t-h2" id="gift-title">Take something home.</h3>
     <ul class="gift__shelf">
-      <li class="gift__item"><span class="gift__icon" aria-hidden="true">PDF</span><h4>The resume</h4><p>One page, every stop.</p><a class="btn btn--ink" href="resume.pdf" download>Download</a></li>
+      <li class="gift__item"><span class="gift__icon" aria-hidden="true">PDF</span><h4>The resume</h4><p>One page, every stop.</p><a class="btn btn--ink" href="/resume.pdf" download>Download</a></li>
       <li class="gift__item"><span class="gift__icon" aria-hidden="true">VCF</span><h4>Contact card</h4><p>Straight into your phone.</p><button class="btn btn--ink" type="button" data-vcard>Save the card</button></li>
       <li class="gift__item"><span class="gift__icon" aria-hidden="true">PNG</span><h4>Doodle wallpaper</h4><p>Your guide, on your lock screen.</p><button class="btn btn--ink" type="button" data-wallpaper>Make wallpaper</button></li>
     </ul>
@@ -165,7 +165,7 @@ const exitHTML = () => `
         <div><dt>Tip</dt><dd><a href="mailto:manojmaheshwarjg@gmail.com">Say hi</a></dd></div>
       </dl>
       <p class="receipt__bar" aria-hidden="true"></p>
-      <a class="mono receipt__again" href="#plaza" data-go="#plaza">Walk around again</a>
+      <a class="mono receipt__again" href="/">Walk around again</a>
     </div>
   </section>`;
 

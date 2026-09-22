@@ -2,6 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <script>
+    // An experience page is set up before the first paint, so the walk in never flashes up behind it.
+    try {
+      var saved = JSON.parse(localStorage.getItem('manoj-museum:v1') || '{}');
+      if (saved.ticketPrinted && /^\/experience\/[a-z0-9-]+\/?$/.test(location.pathname)) document.documentElement.dataset.page = 'experience';
+    } catch (e) {}
+    // Page to page is a view transition. One that can't run (in a hidden tab, say) is skipped quietly, not thrown.
+    var quiet = function (e) { if (e.viewTransition) { e.viewTransition.ready.catch(function () {}); e.viewTransition.finished.catch(function () {}); } };
+    addEventListener('pageswap', quiet);
+    addEventListener('pagereveal', quiet);
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Museum of Manoj · Manoj Maheshwar Jagadeesan</title>
   <meta name="description" content="Walk through the Museum of Manoj: one life from Chennai to New York, told stop by stop. Product, design engineering, growth and AI.">
@@ -46,8 +57,9 @@
   <div class="progress-rail" aria-hidden="true"><i></i></div>
 
   <header class="hud">
-    <a class="hud__brand" href="#plaza" aria-label="Museum of Manoj, back to Fifth Avenue"><span class="logo" aria-hidden="true"><span>MUSEUM</span><span class="logo__of">of</span><span>MANOJ</span></span></a>
+    <a class="hud__brand" href="/" data-go="#plaza" aria-label="Museum of Manoj, back to Fifth Avenue"><span class="logo" aria-hidden="true"><span>MUSEUM</span><span class="logo__of">of</span><span>MANOJ</span></span></a>
     <span class="hud__visitor mono">visitor <span data-visitor>#--,---</span></span>
+    <span class="hud__where mono" data-where hidden></span>
     <button class="hud__menu mono" type="button" aria-controls="directory" aria-expanded="false">Directory</button>
   </header>
 

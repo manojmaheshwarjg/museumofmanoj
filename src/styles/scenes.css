@@ -226,3 +226,7 @@ html.is-gated #tour > section:not(#plaza), html.is-gated #rooms { visibility: hi
 .booth__print.is-nudged { animation: nudge .5s var(--ease) 2; }
 @keyframes nudge { 25% { translate: -6px 0; } 75% { translate: 6px 0; } }
 @media (prefers-reduced-motion: reduce) { .booth__print.is-nudged { animation: none; } }
+
+/* An experience page is one stop of the tour. The walk in belongs to the home page. */
+html[data-page="experience"] #plaza, html[data-page="experience"] #walk,
+html[data-page="experience"] #steps, html[data-page="experience"] #lobby { display: none; }

@@ -1,5 +1,5 @@
-// The galleries. Renders every room from src/content/rooms.js, draws its illustrations,
-// starts its 4D effects, and punches your ticket as you leave each room.
+// One stop of the tour, on its own page: the stop from src/content/rooms.js, its comic strip, its illustrations and
+// 4D effects, and the way on to the stops either side. Reaching the bottom of the page punches your ticket.
 //
 // Plug-ins, collected automatically:
 //   art-*.js   export const ART   = { key: (kit) => draw }   illustrations, 600 × 420
@@ -13,6 +13,7 @@ import { photo, reducedMotion } from '../lib/doodle.js';
 import { punch, on } from '../lib/state.js';
 import { ROOMS } from '../content/rooms.js';
 import { STRIPS } from '../content/strips.js';
+import { pathFor } from '../lib/routes.js';
 import { eggButtonsHTML } from '../world/eggs.js';
 import { kit, sketchPending } from './kit.js';
 
@@ -53,7 +54,7 @@ function stripHTML(room) {
     </ol>`;
 }
 
-function roomHTML(room, next) {
+function roomHTML(room, prev, next) {
   const wing = WINGS[room.layout];
   const body = wing ? wing.html(room) : `<ol class="room__beats">${(room.beats || []).map(beatHTML).join('')}</ol>`;
   return `
@@ -77,12 +78,14 @@ function roomHTML(room, next) {
         </aside>
         <div class="room__body">${body}</div>
       </div>
-      ${next ? `
-      <a class="room__ramp" href="#${next.id}" data-go="#${next.id}">
-        <span class="room__ramp-line" aria-hidden="true"></span>
-        <span class="mono">Up the ramp</span>
-        <span class="room__ramp-to">No. ${next.no} · ${next.title}</span>
-      </a>` : ''}
+      <nav class="room__nav wrap" aria-label="More of the tour">
+        <a class="room__nav-prev" href="${prev.href}"><span class="mono">← Previous</span><span class="room__nav-title">${prev.title}</span></a>
+        <a class="room__nav-next" href="${next.href}">
+          <span class="mono">${next.kicker}</span>
+          <span class="room__nav-to">${next.title}</span>
+          <span class="btn${room.tone === 'night' ? '' : ' btn--ink'} room__nav-cta">${next.cta}<span aria-hidden="true">→</span></span>
+        </a>
+      </nav>
     </section>`;
 }
 
@@ -104,22 +107,49 @@ function countStat(node, quiet) {
   });
 }
 
-export function init() {
+// The stop on screen now, and everything it set running.
+let current = null;
+
+// Leaving a stop: undo its animations and scroll triggers, and stop anything it left going (snow, clocks).
+function dispose() {
+  if (!current) return;
+  current.cleanups.forEach((fn) => { try { fn(); } catch { /* already gone */ } });
+  current.boil.disconnect();
+  current.animations.revert();
+  current = null;
+}
+
+// The express tour hides the long beats, so every trigger needs new measurements.
+on((type) => { if (type === 'ticket') ScrollTrigger.refresh(); });
+
+export function init(stop) {
+  dispose();
   const host = document.getElementById('rooms');
-  host.innerHTML = ROOMS.map((room, i) => roomHTML(room, ROOMS[i + 1])).join('');
+  if (!stop) { host.replaceChildren(); return; }
+  const i = ROOMS.findIndex((room) => room.id === stop.id);
+  const before = ROOMS[i - 1];
+  const after = ROOMS[i + 1];
+  // The way on. The first stop looks back to the lobby, and the last one leads back there too.
+  const prev = before ? { href: pathFor(before.id), title: before.title } : { href: pathFor('lobby'), title: 'The lobby' };
+  const next = after
+    ? { href: pathFor(after.id), kicker: `Next · ${after.no}`, title: after.title, cta: 'View next' }
+    : { href: pathFor('lobby'), kicker: 'The end of the tour', title: 'The lobby', cta: 'Back to the lobby' };
+  host.innerHTML = roomHTML(stop, prev, next);
   const quiet = reducedMotion();
+  const cleanups = [];
 
   // Hand-drawn lines only boil while they are on screen.
   const boil = new IntersectionObserver((entries) => {
     entries.forEach((entry) => entry.target.classList.toggle('is-boiling', entry.isIntersecting));
   }, { rootMargin: '10% 0px' });
 
-  ROOMS.forEach((room) => {
+  // Everything the stop animates is made inside one context, so leaving it can undo all of it in one go.
+  const animations = gsap.context(() => [stop].forEach((room) => {
     const el = document.getElementById(room.id);
     const guide = mountManoj(el.querySelector('.room__guide-art'), {
       pose: room.guide.pose, outfit: room.outfit, label: `Doodle Manoj, your guide to ${room.title}`,
     });
-    const ctx = { room, quiet, kit, guide, ScrollTrigger };
+    const ctx = { room, quiet, kit, guide, ScrollTrigger, onDispose: (fn) => cleanups.push(fn) };
 
     const panels = STRIPS[room.id] || [];
     el.querySelectorAll('.strip__art').forEach((svg) => {
@@ -155,11 +185,9 @@ export function init() {
       trigger: el, start: 'top 60%', once: true,
       onEnter: () => { if (!quiet) gsap.fromTo(bubble, { scale: 0.8, rotate: -4 }, { scale: 1, rotate: 0, duration: 0.5, ease: 'back.out(3)' }); },
     });
-    // The last room ends the page, so its punch lands as you reach the very bottom.
-    const last = room === ROOMS[ROOMS.length - 1];
-    ScrollTrigger.create({ trigger: el, start: last ? 'bottom-=80 bottom' : 'bottom 65%', once: true, onEnter: () => punch(room.n) });
-  });
+    // Each stop ends its own page, so the punch lands as you reach the bottom of it.
+    ScrollTrigger.create({ trigger: el, start: 'bottom-=80 bottom', once: true, onEnter: () => punch(room.n) });
+  }));
 
-  // The express tour hides the long beats, so every trigger needs new measurements.
-  on((type) => { if (type === 'ticket') ScrollTrigger.refresh(); });
+  current = { animations, boil, cleanups };
 }

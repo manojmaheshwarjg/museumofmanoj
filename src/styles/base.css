@@ -209,3 +209,32 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* On an experience page the HUD shows where you are in the tour, in place of the visitor number */
+.hud__where { display: none; }
+html[data-page="experience"] .hud__visitor { display: none; }
+html[data-page="experience"] .hud__where:not([hidden]) { display: inline; }
+
+/* Moving between pages: this one fades, the next rises into place, and the HUD and your ticket stay put */
+@view-transition { navigation: auto; }
+.hud { view-transition-name: hud; }
+.dock-ticket { view-transition-name: dock-ticket; }
+::view-transition-old(root) { animation: page-out .18s ease-in both; }
+::view-transition-new(root) { animation: page-in .36s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes page-out { to { opacity: 0; } }
+@keyframes page-in { from { opacity: 0; transform: translateY(14px); } }
+/* Between stops the next page slides in over this one, from the side you're heading to, like turning to it */
+:root[data-nav]::view-transition-old(root), :root[data-nav]::view-transition-new(root) {
+  mix-blend-mode: normal; animation-duration: .56s; animation-timing-function: cubic-bezier(.22, .8, .2, 1); animation-fill-mode: both;
+}
+:root[data-nav="forward"]::view-transition-old(root) { animation-name: stop-leave-left; }
+:root[data-nav="forward"]::view-transition-new(root) { animation-name: stop-enter-right; box-shadow: -18px 0 36px rgba(14, 13, 11, .24); }
+:root[data-nav="back"]::view-transition-old(root) { animation-name: stop-leave-right; }
+:root[data-nav="back"]::view-transition-new(root) { animation-name: stop-enter-left; box-shadow: 18px 0 36px rgba(14, 13, 11, .24); }
+@keyframes stop-leave-left { to { transform: translateX(-28%); filter: brightness(.9); } }
+@keyframes stop-enter-right { from { transform: translateX(100%); } }
+@keyframes stop-leave-right { to { transform: translateX(28%); filter: brightness(.9); } }
+@keyframes stop-enter-left { from { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

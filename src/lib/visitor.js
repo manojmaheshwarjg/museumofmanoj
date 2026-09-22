@@ -5,7 +5,7 @@ import { setVisitor } from './state.js';
 
 const ID_KEY = 'manoj-museum:visitor-id';
 const COOKIE = 'mm_vid';
-const API = import.meta.env.VITE_VISITOR_API || 'api/visit';
+const API = import.meta.env.VITE_VISITOR_API || '/api/visit';
 
 function uuid() {
   if (crypto.randomUUID) return crypto.randomUUID();

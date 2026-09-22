@@ -47,7 +47,7 @@ export const FX = {
   },
 
   // Snow falls across the whole Buffalo room. Tap anywhere in the room for a blizzard.
-  snow: (layer, { quiet }) => {
+  snow: (layer, { quiet, onDispose }) => {
     const canvas = layer?.querySelector('canvas');
     if (!canvas || quiet) return;
     const room = layer.closest('.room');
@@ -94,7 +94,10 @@ export const FX = {
     const start = () => { if (running) return; running = true; resize(); raf = requestAnimationFrame(tick); };
     const stop = () => { running = false; cancelAnimationFrame(raf); };
     ScrollTrigger.create({ trigger: room, start: 'top bottom', end: 'bottom top', onToggle: (self) => (self.isActive ? start() : stop()) });
-    addEventListener('resize', () => { if (running) resize(); });
+    const onResize = () => { if (running) resize(); };
+    addEventListener('resize', onResize);
     room.addEventListener('pointerdown', () => { gust = 2.5; });
+    // Moving on to another stop: the snow stops falling, and lets go of the window.
+    onDispose?.(() => { stop(); removeEventListener('resize', onResize); });
   },
 };

@@ -4,6 +4,7 @@
 import gsap from 'gsap';
 import { state, on, printTicket, formatVisitor, ROOM_COUNT } from '../../lib/state.js';
 import { reducedMotion } from '../../lib/doodle.js';
+import { pathFor, heldStop } from '../../lib/routes.js';
 
 const MODE_LABEL = { full: 'full tour', express: 'express tour', resume: 'just the resume' };
 const MODE_LINE = {
@@ -56,6 +57,8 @@ export function initBooth({ panel, ticket, bubble, guide }) {
   const printButton = panel.querySelector('.booth__print');
   const gate = panel.querySelector('[data-gate]');
   let spoken = false;
+  // Arrived by a link to one page: the ticket is the way in, and that page is where it leads.
+  const bound = heldStop();
 
   const say = (line) => {
     bubble.textContent = line;
@@ -63,10 +66,15 @@ export function initBooth({ panel, ticket, bubble, guide }) {
   };
   const greeting = () => {
     if (state.ticketPrinted) return 'Welcome back. Your ticket still works.';
+    if (bound) return `Here for ${bound.title}? Print a ticket and I'll take you straight there.`;
     if (Number.isInteger(state.visitor)) return `Visitor ${formatVisitor(state.visitor)}, right on time. How long can you stay?`;
     return 'Hi! How long can you stay?';
   };
   bubble.textContent = greeting();
+  if (bound && !state.ticketPrinted) {
+    gate.textContent = `Print a ticket to see ${bound.title}.`;
+    gate.hidden = false;
+  }
   on((type) => { if (type === 'visitor' && !spoken) bubble.textContent = greeting(); });
 
   const reflect = () => {
@@ -74,8 +82,9 @@ export function initBooth({ panel, ticket, bubble, guide }) {
     ticket.querySelector('[data-t-mode]').textContent = MODE_LABEL[state.mode] || 'full tour';
     const toResume = state.mode === 'resume';
     next.textContent = toResume ? 'Take me to the resume' : 'Walk to the entrance';
-    next.dataset.go = toResume ? '#room-12' : '#steps';
-    next.setAttribute('href', next.dataset.go);
+    // The resume lives on the last stop's own page; the entrance is further along this one.
+    if (toResume) { next.setAttribute('href', pathFor('room-12')); delete next.dataset.go; }
+    else { next.dataset.go = '#steps'; next.setAttribute('href', '#steps'); }
     next.hidden = false;
     after.hidden = false;
     gate.hidden = true;

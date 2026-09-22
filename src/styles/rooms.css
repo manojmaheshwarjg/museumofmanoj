@@ -58,15 +58,22 @@
 }
 body[data-mode="express"] .beat[data-full] { display: none; }
 
-/* The ramp up to the next room */
-.room__ramp {
-  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "tag line" "to to"; align-items: center; gap: 6px 16px;
-  margin-top: clamp(72px, 10vw, 128px); padding: 24px var(--pad) 30px; text-decoration: none; border-top: 2px solid currentColor;
+/* The way on: a clear button to the next stop, and a quieter way back to the one before */
+.room__nav { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 18px 32px; margin-top: clamp(72px, 10vw, 128px); padding-block: 28px clamp(44px, 7vw, 80px); border-top: 2px solid currentColor; }
+.room__nav a { text-decoration: none; }
+.room__nav .mono { opacity: .7; }
+.room__nav-prev { display: grid; gap: 6px; justify-self: start; }
+.room__nav-title { font-size: clamp(17px, 2vw, 22px); font-weight: 800; letter-spacing: -.01em; line-height: 1.1; opacity: .8; }
+.room__nav-next { display: grid; justify-items: end; gap: 8px; text-align: right; }
+.room__nav-to { font-size: clamp(24px, 3.2vw, 40px); font-weight: 800; letter-spacing: -.02em; line-height: 1.05; }
+.room__nav-cta { margin-top: 10px; }
+.room__nav-next:hover .room__nav-cta, .room__nav-next:focus-visible .room__nav-cta { transform: translate(-2px, -2px); }
+.room__nav-prev:hover .room__nav-title, .room__nav-prev:focus-visible .room__nav-title { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+@media (max-width: 719px) {
+  .room__nav { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+  .room__nav-next { order: -1; justify-items: stretch; text-align: left; }
+  .room__nav-cta { justify-content: center; }
 }
-.room__ramp .mono { grid-area: tag; opacity: .7; }
-.room__ramp-line { grid-area: line; border-top: 2px dashed currentColor; rotate: -1.5deg; transform-origin: left; }
-.room__ramp-to { grid-area: to; font-size: clamp(22px, 3vw, 38px); font-weight: 800; letter-spacing: -.02em; line-height: 1.05; }
-.room__ramp:hover .room__ramp-to, .room__ramp:focus-visible .room__ramp-to { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
 
 /* Ambient layers, like snow, stay on screen while you walk the room */
 .room__ambient { position: sticky; z-index: 2; top: 0; height: 100svh; margin-bottom: -100svh; pointer-events: none; }
@@ -268,7 +275,7 @@ body[data-mode="express"] .beat[data-full] { display: none; }
 .receipt__again { justify-self: center; margin-top: 4px; }
 
 /* The comic strip: how the room happened, in panels above the room itself */
-.room__strip { list-style: none; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 14px; margin: 0 0 clamp(40px, 6vw, 72px); padding-block: 0; }
+.room__strip { list-style: none; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 14px; margin-block: 0 clamp(40px, 6vw, 72px); padding-block: 0; }
 .strip__panel { display: grid; align-content: start; gap: 9px; padding: 0 13px 13px; border: 2.5px solid currentColor; border-radius: 4px; }
 .room--paper .strip__panel { background-color: var(--paper); box-shadow: 5px 5px 0 rgba(14, 13, 11, .14); }
 .room--night .strip__panel { background-color: var(--night); box-shadow: 5px 5px 0 rgba(241, 237, 227, .12); }
