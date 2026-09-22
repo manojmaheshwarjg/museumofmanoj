@@ -1,12 +1,16 @@
-// The first stop, the first time this visit. The walk in was hands-free, so once the stop has risen into place the page
-// softly blurs behind one line asking you to scroll, with the avenue's scroll cue beside it. Anyone already
-// scrolling never sees it. Any scroll, swipe, key or tap clears it, and it doesn't come back this visit.
+// The first stop, every time you land on it. The walk in was hands-free, so once the stop is in place the page softly
+// blurs behind one line asking you to scroll, with the avenue's scroll cue beside it, for a moment and no longer.
+// Anyone already scrolling never sees it, and any scroll, swipe, key or tap clears it sooner.
 
-const SEEN = 'manoj-museum:your-turn';
 const MOVES = ['wheel', 'touchstart', 'pointerdown', 'keydown', 'scroll'];
 const OPTIONS = { passive: true, capture: true };
+// How long it stays before it clears by itself.
+const SHOWN_FOR = 1500;
+
+let current = null; // the cue on screen, and its way out
 
 function show() {
+  current?.clear();
   const el = document.createElement('div');
   el.className = 'your-turn';
   el.setAttribute('aria-hidden', 'true');
@@ -19,25 +23,34 @@ function show() {
   void el.offsetWidth;
   el.classList.add('is-in');
   const from = window.scrollY;
+  let timer = 0;
   const clear = (e) => {
-    if (e.type === 'scroll' && Math.abs(window.scrollY - from) < 4) return;
+    if (e?.type === 'scroll' && Math.abs(window.scrollY - from) < 4) return;
+    clearTimeout(timer);
     MOVES.forEach((type) => removeEventListener(type, clear, OPTIONS));
     el.classList.remove('is-in');
-    setTimeout(() => el.remove(), 450);
+    setTimeout(() => el.remove(), 400);
+    if (current?.el === el) current = null;
   };
   MOVES.forEach((type) => addEventListener(type, clear, OPTIONS));
+  timer = setTimeout(clear, SHOWN_FOR);
+  current = { el, clear };
 }
 
+// Shows the cue a moment after `ready` settles. Returns a way to call it off: leaving the stop takes the cue with it.
 export function yourTurn(ready) {
-  try {
-    if (sessionStorage.getItem(SEEN)) return;
-    sessionStorage.setItem(SEEN, '1');
-  } catch { /* storage blocked: it shows each time */ }
   let moved = false;
+  let dropped = false;
   const early = (e) => { if (e.type !== 'scroll' || window.scrollY > 40) moved = true; };
+  const quiet = () => MOVES.forEach((type) => removeEventListener(type, early, OPTIONS));
   MOVES.forEach((type) => addEventListener(type, early, OPTIONS));
   ready.then(() => new Promise((resolve) => { setTimeout(resolve, 600); })).then(() => {
-    MOVES.forEach((type) => removeEventListener(type, early, OPTIONS));
-    if (!moved) show();
+    quiet();
+    if (!moved && !dropped) show();
   });
+  return () => {
+    dropped = true;
+    quiet();
+    current?.clear();
+  };
 }

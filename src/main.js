@@ -210,6 +210,12 @@ if (onPage) showWhere(stop);
 // The way home (the street, the steps) is a full page load, because that is where the 3D city lives.
 let stops = null;
 let shown = onPage ? stop : null;
+// The first stop's scroll cue (lib/your-turn.js) shows every time you land on it, and leaves when you do.
+let dropCue = null;
+const cueOn = (at, ready) => {
+  dropCue?.();
+  dropCue = at?.id === 'room-02' ? yourTurn(ready) : null;
+};
 function travel(path, { push = true } = {}) {
   const to = stopAt(path);
   if (!to || !stops) { location.assign(path); return; }
@@ -227,10 +233,11 @@ function travel(path, { push = true } = {}) {
     paintVisitor();
   };
   const done = () => { delete docEl.dataset.nav; };
-  if (!document.startViewTransition || reducedMotion()) { swap(); done(); return; }
+  if (!document.startViewTransition || reducedMotion()) { swap(); done(); cueOn(to, Promise.resolve()); return; }
   const transition = document.startViewTransition(swap);
   transition.ready.catch(() => {});
   transition.finished.then(done, done);
+  cueOn(to, transition.finished.catch(() => {}));
 }
 if (onPage) {
   history.scrollRestoration = 'manual';
@@ -245,6 +252,8 @@ if (onPage) {
     travel(url.pathname);
   });
   addEventListener('popstate', () => travel(location.pathname, { push: false }));
+  // Back on this page from somewhere else, as the browser kept it: landing here again.
+  addEventListener('pageshow', (e) => { if (e.persisted) cueOn(shown, Promise.resolve()); });
 }
 
 // The loader (index.html) on the home page, and the hands-free walk in once the city is up.
@@ -337,8 +346,7 @@ async function boot() {
   ScrollTrigger.refresh();
   const risen = riseThroughDoors();
   if (throughDoors && state.mode === 'resume') risen.then(onToTheResume);
-  // The first stop: a word that from here on, you scroll.
-  if (onPage && stop.id === 'room-02') yourTurn(risen);
+  if (onPage) cueOn(stop, risen);
   // Arriving at a place in the walk (the steps from an experience page, the booth from a shared link): go straight
   // there, now that every scene has its height.
   const landing = !onPage && /^#[a-z][\w-]*$/i.test(location.hash) ? document.querySelector(location.hash) : null;
