@@ -1,8 +1,9 @@
 // The walk in, hands-free. Once the city has drawn itself, the camera walks you up 26th Avenue to the ticket booth.
 // Once you choose a tour it carries on: out through Manoj's door, up the steps holding his hand, and in through the
-// doors, on to the first stop for the full experience or the gift shop for the resume (lib/entrance.js). Scroll, swipe
-// or press a key at any point and the walk is yours; Walk me picks it back up from wherever you are. It moves the page
-// itself, so every scene plays exactly as it does when you scroll.
+// doors, on to the first stop for the full experience or the gift shop for the resume (lib/entrance.js). It moves the
+// page itself, so every scene plays exactly as it does when you scroll.
+// The control is a switch. On, the walk has the page: scrolling yourself is ignored, and the control says how to take
+// over. Off, the page is yours until you switch it back on, and the walk picks up from wherever you are.
 
 import gsap from 'gsap';
 import { getLenis } from './scroll.js';
@@ -17,6 +18,7 @@ const COPY = {
   booth: { go: 'Walking you to the booth', stopped: 'Walk me to the booth' },
   in: { go: 'Walking you in', stopped: 'Walk me in' },
 };
+const NUDGE = 'Pause to scroll yourself';
 
 export function createAutopilot(world) {
   const root = document.documentElement;
@@ -67,6 +69,7 @@ export function createAutopilot(world) {
   const line = ui.querySelector('[data-walk-line]');
 
   let enabled = false;
+  let auto = true; // the switch: on until you turn it off
   let mode = 'idle'; // idle, driving, or waiting (the moment between choosing a tour and the walk in)
   let leg = 'booth';
   let tween = null;
@@ -74,6 +77,9 @@ export function createAutopilot(world) {
   let goal = { y: 0 };
   let at = 0;
   let lastSet = null;
+  let nudgeUntil = 0; // until when the control says how to take over
+  let nudgeTimer = 0;
+  let holding = false; // whether scrolling yourself is being ignored
 
   const legFor = () => (state.ticketPrinted ? 'in' : 'booth');
   const endOf = (which) => (which === 'booth' ? booth() : inside());
@@ -89,8 +95,14 @@ export function createAutopilot(world) {
   // The page follows the walk a quarter second behind, which smooths every change of pace.
   function follow(time, deltaMs) {
     if (mode !== 'driving') return;
-    // Anyone else moving the page (the scrollbar, a link, a swipe the listeners missed) takes the walk over.
-    if (lastSet !== null && Math.abs(window.scrollY - lastSet) > 6) { takeOver(); return; }
+    // Anyone else moving the page (the scrollbar, the browser settling its toolbars) doesn't stop the walk: it carries on
+    // from wherever the page is now. Held short by the end of the page, it has arrived.
+    const y = window.scrollY;
+    if (lastSet !== null && Math.abs(y - lastSet) > 6) {
+      if (lastSet > y && y >= root.scrollHeight - window.innerHeight - 2) arrive();
+      else drive(leg);
+      return;
+    }
     const dt = Math.min(0.05, deltaMs / 1000 || 1 / 60);
     at += (goal.y - at) * (1 - Math.exp(-dt / LAG));
     if (!tween && Math.abs(goal.y - at) < 0.5) {
@@ -145,11 +157,11 @@ export function createAutopilot(world) {
     halt();
   }
 
+  // At the booth the walk waits for a choice, every visit: only choosing a tour carries it on in.
   function arrive() {
+    tween?.kill();
     tween = null;
     mode = 'idle';
-    // Walked to the booth with a ticket already in hand: after a moment to see it, carry on in.
-    if (leg === 'booth' && state.ticketPrinted) { walkIn({ delay: 1 }); return; }
     render();
   }
 
@@ -161,6 +173,8 @@ export function createAutopilot(world) {
     if (leg === 'in' && mode !== 'idle') return;
     halt();
     leg = 'in';
+    // Switched off: the walk in is offered, not taken.
+    if (!auto) { render(); return; }
     mode = 'waiting';
     render();
     // On the animation clock, like the rest of the walk, so it pauses with the page rather than firing behind it.
@@ -174,11 +188,14 @@ export function createAutopilot(world) {
     const end = endOf(which);
     const y = window.scrollY;
     const going = mode !== 'idle';
+    const nudging = going && performance.now() < nudgeUntil;
     const show = enabled && end !== null && (going || y < end - 24);
     ui.classList.toggle('is-off', !show);
     ui.classList.toggle('is-going', going);
+    ui.classList.toggle('is-nudged', nudging);
+    holdPage(mode === 'driving');
     const copy = COPY[which];
-    line.textContent = going ? copy.go : copy.stopped;
+    line.textContent = nudging ? NUDGE : going ? copy.go : copy.stopped;
     toggle.setAttribute('aria-label', going ? 'Pause the walk' : copy.stopped);
     const start = startOf(which) ?? 0;
     const span = Math.max(1, (end ?? 1) - start);
@@ -191,35 +208,49 @@ export function createAutopilot(world) {
     requestAnimationFrame(() => { queued = false; render(); });
   }, { passive: true });
 
-  // Taking over: any real scroll input. Typing in the booth's name field, or pressing the buttons, is not.
-  const input = () => takeOver();
-  addEventListener('wheel', input, { passive: true, capture: true });
-  addEventListener('touchmove', input, { passive: true, capture: true });
-  addEventListener('keydown', (e) => {
-    if (!SCROLL_KEYS.includes(e.key) || e.target.closest?.('input, textarea, select, button, a, [contenteditable]')) return;
-    takeOver();
-  }, true);
+  // While the walk has the page, scrolling yourself is ignored and the control says how to take over. Pinching to zoom
+  // still works, and keys meant for a button or a field are theirs. It only listens while walking, so scrolling
+  // yourself the rest of the time stays as smooth as ever.
+  const ignore = (e) => {
+    if (e.touches?.length > 1) return;
+    if (e.type === 'keydown' && (!SCROLL_KEYS.includes(e.key) || e.target.closest?.('input, textarea, select, button, a, [contenteditable]'))) return;
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    nudgeUntil = performance.now() + 2200;
+    clearTimeout(nudgeTimer);
+    nudgeTimer = setTimeout(render, 2250);
+    render();
+  };
+  const HOLD = [['wheel', { passive: false, capture: true }], ['touchmove', { passive: false, capture: true }], ['keydown', { capture: true }]];
+  function holdPage(on) {
+    if (on === holding) return;
+    holding = on;
+    HOLD.forEach(([type, options]) => (on ? addEventListener(type, ignore, options) : removeEventListener(type, ignore, options)));
+  }
   // Changing your mind at the booth (the tour, the name) holds the walk in until you ask for it.
   document.addEventListener('pointerdown', (e) => {
     if (mode === 'waiting' && e.target.closest?.('[data-panel]')) takeOver();
   }, true);
 
   toggle.addEventListener('click', () => {
-    if (mode === 'idle') drive(legFor());
+    auto = mode === 'idle';
+    if (auto) drive(legFor());
     else halt();
   });
 
   return {
-    // Begin: up the avenue to the booth, or, standing at the booth with a ticket already, on in after a beat. Landed
-    // further along (a link back to the steps), the walk is offered, not taken.
+    // Begin: up the avenue to the booth. Landed further along (a link back to the steps), the walk is offered, not
+    // taken.
     start() {
       enabled = true;
-      const y = window.scrollY;
-      if (y < booth() - 24) drive('booth');
-      else if (state.ticketPrinted && y < booth() + 24) walkIn();
+      if (window.scrollY < booth() - 24) drive('booth');
       else render();
     },
     walkIn,
-    stop: halt,
+    // Switched off from outside (a jump to somewhere along the walk): the page is yours.
+    stop() {
+      auto = false;
+      halt();
+    },
   };
 }

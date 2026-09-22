@@ -273,3 +273,22 @@
 .receipt__rows dd { margin: 0; font-weight: 500; text-align: right; }
 .receipt__bar { height: 34px; margin: 4px 0 0; background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 7px, transparent 7px 9px); }
 .receipt__again { justify-self: center; margin-top: 4px; }
+
+/* The first stop's nudge to scroll (lib/your-turn.js): the page softly out of focus behind one line and the avenue's
+   scroll cue. The bar along the top and the ticket stay sharp above it. */
+.your-turn {
+  position: fixed; z-index: 78; inset: 0; display: grid; place-items: center; padding: var(--pad);
+  background-color: rgba(7, 7, 6, .45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  opacity: 0; transition: opacity .45s var(--ease);
+}
+.your-turn.is-in { opacity: 1; }
+.your-turn:not(.is-in) { pointer-events: none; }
+/* On the same dark card as the walk's line (scenes.css), so it reads over any photo. */
+.your-turn__cue {
+  display: flex; align-items: center; gap: 20px; padding: 20px 30px 22px 26px;
+  background-color: #070706; border: 1.5px solid var(--line); border-radius: 14px; box-shadow: 6px 6px 0 rgba(241, 237, 227, .12);
+}
+.your-turn__text { margin: 0; font-size: clamp(26px, 7.2vw, 42px); color: var(--paper); text-wrap: balance; }
+/* Snug on a phone, so the line fits on one row. */
+@media (max-width: 559px) { .your-turn__cue { gap: 14px; padding: 16px 20px 18px 18px; } }
+@media (prefers-reduced-motion: reduce) { .your-turn { transition: none; } }

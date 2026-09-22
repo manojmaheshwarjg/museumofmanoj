@@ -1,7 +1,9 @@
-// Tour state: this browser's visitor number, the chosen tour, the name on the ticket and punched rooms.
-// Stored per browser so a returning visitor keeps their ticket and their number.
+// Tour state: this browser's visitor number and the name on the ticket, stored per browser so a returning visitor
+// keeps their number. The ticket itself (the tour chosen, its punches, the time inside) lasts one visit, in this tab:
+// every visit starts at the booth with the choice still to make.
 
 const KEY = 'manoj-museum:v1';
+const VISIT = 'manoj-museum:visit';
 const listeners = new Set();
 
 export const ROOM_COUNT = 12;
@@ -12,8 +14,15 @@ function load() {
 function save(data) {
   try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* private mode: keep it in memory */ }
 }
+function loadVisit() {
+  try { return JSON.parse(sessionStorage.getItem(VISIT)) || {}; } catch { return {}; }
+}
+function saveVisit(data) {
+  try { sessionStorage.setItem(VISIT, JSON.stringify(data)); } catch { /* storage blocked: keep it in memory */ }
+}
 
 const stored = load();
+const visit = loadVisit();
 
 export const state = {
   // Only numbers handed out by the visitor counter are ever shown. Nothing is made up locally.
@@ -21,11 +30,10 @@ export const state = {
   totalVisitors: Number.isInteger(stored.totalVisitors) ? stored.totalVisitors : null,
   returning: false,
   name: stored.name || '',
-  // Express was retired: anyone who chose it before is on the full tour.
-  mode: stored.mode === 'express' ? 'full' : stored.mode || null,
-  punched: new Set(stored.punched || []),
-  ticketPrinted: Boolean(stored.ticketPrinted),
-  startedAt: stored.startedAt || Date.now(),
+  mode: visit.mode || null,
+  punched: new Set(visit.punched || []),
+  ticketPrinted: Boolean(visit.ticketPrinted),
+  startedAt: visit.startedAt || Date.now(),
 };
 
 function persist() {
@@ -34,6 +42,8 @@ function persist() {
     visitorCounted: state.visitor !== null,
     totalVisitors: state.totalVisitors,
     name: state.name,
+  });
+  saveVisit({
     mode: state.mode,
     punched: [...state.punched],
     ticketPrinted: state.ticketPrinted,

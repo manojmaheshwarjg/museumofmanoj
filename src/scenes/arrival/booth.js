@@ -37,7 +37,7 @@ export function initBooth({ panel, bubble, guide }) {
     if (!reducedMotion()) gsap.fromTo(bubble, { scale: 0.88, rotate: -3 }, { scale: 1, rotate: 0, duration: 0.45, ease: 'back.out(3)' });
   };
   const greeting = () => {
-    if (state.ticketPrinted) return 'Welcome back. Your ticket still works.';
+    if (state.ticketPrinted) return 'Welcome back. Which tour this time?';
     if (bound) return `Here for ${bound.title}? Choose a tour and I'll take you straight there.`;
     if (Number.isInteger(state.visitor)) return `Visitor ${formatVisitor(state.visitor)}, right on time. How long can you stay?`;
     return 'Hi! How long can you stay?';
@@ -49,14 +49,14 @@ export function initBooth({ panel, bubble, guide }) {
   }
   on((type) => { if (type === 'visitor' && !spoken) bubble.textContent = greeting(); });
 
-  // Once chosen, that card stays lit. The choice itself is the way in, so there's nothing more to press.
+  // Once chosen, that card stays lit. The choice itself is the way in, so there's nothing more to press. Nothing starts
+  // out lit, even with a ticket from earlier in this visit: the booth asks every time.
   const reflect = () => {
     const mode = state.mode === 'resume' ? 'resume' : 'full';
     modes.querySelectorAll('button[data-mode]').forEach((choice) => choice.setAttribute('aria-pressed', String(choice.dataset.mode === mode)));
     after.hidden = mode === 'resume';
     gate.hidden = true;
   };
-  if (state.ticketPrinted) reflect();
 
   // Trying to walk on without choosing: Manoj points at the choices and they give a little shake.
   window.addEventListener('museum:gate', () => {

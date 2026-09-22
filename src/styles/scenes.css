@@ -170,6 +170,10 @@ html.has-autowalk .arrival__cue, html.has-autowalk .steps__ui { display: none; }
 .autowalk.is-going .autowalk__play { display: none; }
 .autowalk__hint { margin: 0; background: #070706; border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 14px 9px; }
 .autowalk__hint .hand { font-size: 25px; }
+/* Scrolling while the walk has the page: the switch gives a little shake, and its line says how to take over. */
+.autowalk.is-nudged .autowalk__btn { animation: walk-nudge .6s var(--ease); }
+.autowalk.is-nudged .autowalk__hint { border-color: var(--paper); }
+@keyframes walk-nudge { 20% { transform: rotate(-10deg) scale(1.08); } 45% { transform: rotate(8deg) scale(1.08); } 70% { transform: rotate(-4deg); } }
 @media (max-width: 719px) {
   /* Room on the right for your ticket, once there is one in the corner. */
   .autowalk { right: var(--pad); gap: 12px; }

@@ -5,7 +5,7 @@
   <script>
     // An experience page is set up before the first paint, so the walk in never flashes up behind it.
     try {
-      var saved = JSON.parse(localStorage.getItem('manoj-museum:v1') || '{}');
+      var saved = JSON.parse(sessionStorage.getItem('manoj-museum:visit') || '{}');
       if (saved.ticketPrinted && /^\/experience\/[a-z0-9-]+\/?$/.test(location.pathname)) document.documentElement.dataset.page = 'experience';
     } catch (e) {}
     // The walk in needs the 3D city, so its code starts downloading now, alongside everything else, instead of once

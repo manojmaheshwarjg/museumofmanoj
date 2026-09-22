@@ -14,6 +14,7 @@ import { STOPS } from './content/tour.js';
 import { stopAt, stopIndex, pathFor, holdForTicket, takeHeldPath } from './lib/routes.js';
 import { createAutopilot } from './lib/autopilot.js';
 import { goInside } from './lib/entrance.js';
+import { yourTurn } from './lib/your-turn.js';
 
 gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({ ignoreMobileResize: true });
@@ -133,6 +134,8 @@ document.addEventListener('click', (e) => {
   if (!target || !target.getClientRects().length) return;
   e.preventDefault();
   setDirectory(false);
+  // A jump along the walk is taking the page yourself: the hands-free walk switches off.
+  autopilot?.stop();
   if (gated() && !target.closest('#plaza')) {
     scrollToTarget('#booth');
     nudgedAt = -Infinity;
@@ -282,17 +285,28 @@ async function open(world, landing) {
 // Through the doors (lib/entrance.js): this page starts as the light through them, and the stop rises up into it from
 // the bottom, the way the welcome used to scroll up when it was part of the street. Everything that measures the page
 // measures it again once the stop is in place.
+const throughDoors = docEl.dataset.arrive === 'doors';
 function riseThroughDoors() {
-  if (docEl.dataset.arrive !== 'doors') return;
+  if (docEl.dataset.arrive !== 'doors') return Promise.resolve();
   clearTimeout(window.__doorsTimer);
   const host = document.getElementById('rooms');
-  const settle = () => {
-    gsap.set(host, { clearProps: 'transform' });
-    delete docEl.dataset.arrive;
-    ScrollTrigger.refresh();
-  };
-  if (reducedMotion()) { settle(); return; }
-  gsap.fromTo(host, { y: innerHeight }, { y: 0, duration: 1.15, ease: 'power3.out', onComplete: settle });
+  return new Promise((resolve) => {
+    const settle = () => {
+      gsap.set(host, { clearProps: 'transform' });
+      delete docEl.dataset.arrive;
+      ScrollTrigger.refresh();
+      resolve();
+    };
+    if (reducedMotion()) { settle(); return; }
+    gsap.fromTo(host, { y: innerHeight }, { y: 0, duration: 1.15, ease: 'power3.out', onComplete: settle });
+  });
+}
+
+// The resume tour doesn't stop at the skylight: a moment after it's up, the page carries on down to the gift shop,
+// where the resume is, clear of the bar along the top.
+function onToTheResume() {
+  const bar = document.querySelector('.hud')?.offsetHeight || 0;
+  gsap.delayedCall(reducedMotion() ? 0 : 0.5, () => scrollToTarget('.gift', { offset: -(bar + 20) }));
 }
 
 async function boot() {
@@ -321,7 +335,10 @@ async function boot() {
   loadPhotos();
   startBoil();
   ScrollTrigger.refresh();
-  riseThroughDoors();
+  const risen = riseThroughDoors();
+  if (throughDoors && state.mode === 'resume') risen.then(onToTheResume);
+  // The first stop: a word that from here on, you scroll.
+  if (onPage && stop.id === 'room-02') yourTurn(risen);
   // Arriving at a place in the walk (the steps from an experience page, the booth from a shared link): go straight
   // there, now that every scene has its height.
   const landing = !onPage && /^#[a-z][\w-]*$/i.test(location.hash) ? document.querySelector(location.hash) : null;
