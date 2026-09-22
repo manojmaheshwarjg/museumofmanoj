@@ -43,7 +43,7 @@ function stripHTML(room) {
   const panels = STRIPS[room.id] || [];
   if (!panels.length) return '';
   return `
-    <ol class="room__strip wrap" aria-label="How room ${room.no} happened">
+    <ol class="room__strip wrap" aria-label="The story behind ${attr(room.title)}">
       ${panels.map((p, i) => `
         <li class="strip__panel${p.tell ? ' strip__panel--tell' : ''}">
           <p class="mono strip__cap">${p.caption}</p>
@@ -63,7 +63,7 @@ function roomHTML(room, next) {
       <div class="room__inner wrap">
         <aside class="room__plaque">
           <div class="room__card">
-            <p class="mono room__kicker"><span>Room ${room.no}</span><span>${room.time}</span></p>
+            <p class="mono room__kicker"><span>No. ${room.no}</span><span>${room.time}</span></p>
             <h2 class="t-h1 room__title" id="${room.id}-title">${room.title}</h2>
             <p class="mono room__meta">${room.place} · ${room.dates}</p>
             ${room.fourD ? `<p class="room__4d"><span class="mono">4D</span>${room.fourD}</p>` : ''}
@@ -81,7 +81,7 @@ function roomHTML(room, next) {
       <a class="room__ramp" href="#${next.id}" data-go="#${next.id}">
         <span class="room__ramp-line" aria-hidden="true"></span>
         <span class="mono">Up the ramp</span>
-        <span class="room__ramp-to">Room ${next.no} · ${next.title}</span>
+        <span class="room__ramp-to">No. ${next.no} · ${next.title}</span>
       </a>` : ''}
     </section>`;
 }
@@ -117,7 +117,7 @@ export function init() {
   ROOMS.forEach((room) => {
     const el = document.getElementById(room.id);
     const guide = mountManoj(el.querySelector('.room__guide-art'), {
-      pose: room.guide.pose, outfit: room.outfit, label: `Doodle Manoj, your guide in room ${room.no}`,
+      pose: room.guide.pose, outfit: room.outfit, label: `Doodle Manoj, your guide to ${room.title}`,
     });
     const ctx = { room, quiet, kit, guide, ScrollTrigger };
 

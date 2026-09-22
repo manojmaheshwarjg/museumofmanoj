@@ -121,7 +121,7 @@ on((type, _state, room) => {
   }
   if (type !== 'punch') return;
   renderDock(room);
-  toast.innerHTML = `<span class="dotf">PUNCHED</span><span class="mono">room ${String(room).padStart(2, '0')} · ${state.punched.size} of ${ROOM_COUNT}</span>`;
+  toast.innerHTML = `<span class="dotf">PUNCHED</span><span class="mono">no. ${String(room).padStart(2, '0')} · ${state.punched.size} of ${ROOM_COUNT}</span>`;
   toast.classList.remove('is-in');
   void toast.offsetWidth;
   toast.classList.add('is-in');

@@ -40,7 +40,7 @@ export const STRIPS = {
   'room-07': [
     { caption: 'July 2024', art: 'notebook-ai', line: 'Ten apps shipped, and one question in the notebook: what next?' },
     { caption: 'The answer', art: 'decision', line: 'The moment I chose AI', tell: true },
-    { caption: 'Up next', art: 'window-seat', line: 'The biggest room in the museum. Take your time.' },
+    { caption: 'Up next', art: 'window-seat', line: 'The longest stop on the tour. Take your time.' },
   ],
   'room-08': [
     { caption: 'August 2024', art: 'landing', line: 'Wheels down in Buffalo.' },

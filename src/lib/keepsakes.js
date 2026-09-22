@@ -72,7 +72,7 @@ async function postcardFor(room) {
   const art = await artCanvas(room.beats?.[0]?.art || room.exhibits?.[0]?.art, room.tone, 900);
   if (art) ctx.drawImage(art, 70, 150, 720, 504);
   rc.rectangle(70, 150, 720, 504, { stroke: INK, strokeWidth: 4, roughness: 1, seed: 5 });
-  text(ctx, `Room ${room.no}`, 72, 118, `500 30px ${MONO}`, MUTED);
+  text(ctx, `No. ${room.no}`, 72, 118, `500 30px ${MONO}`, MUTED);
   wrap(ctx, room.fourD, 72, 720, 720, 44, `500 36px ${HAND}`);
   rc.line(840, 70, 840, 930, { stroke: INK, strokeWidth: 3, seed: 7 });
   rc.rectangle(1250, 70, 170, 200, { stroke: INK, strokeWidth: 3, strokeLineDash: [10, 7], seed: 9 });
@@ -84,7 +84,7 @@ async function postcardFor(room) {
   text(ctx, `To: ${traveler()}`, 900, 690, `500 44px ${HAND}`);
   text(ctx, `Visitor ${formatVisitor(state.visitor)}`, 900, 760, `500 44px ${HAND}`);
   drawLogo(ctx, 1155, 915, 30, INK);
-  return save(c, `museum-of-manoj-room-${room.no}-postcard.png`);
+  return save(c, `museum-of-manoj-${room.no}-postcard.png`);
 }
 
 async function boardingPass(a) {

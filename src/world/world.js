@@ -208,7 +208,7 @@ export function createWorld(canvas) {
   const play = { from: new Vector3(PX, 0.34, PZ), to: new Vector3(PX, 0.34, PZ), t: 1, duration: 1, holder: 0 };
 
   // Lampposts along both curbs, with halftone light on the pavement and banners on the east side.
-  const banners = ['NOW OPEN', '12 ROOMS', 'VISITORS', 'TONIGHT'].map((t) => new MeshBasicMaterial({ map: T.bannerTexture(t), transparent: true }));
+  const banners = ['NOW OPEN', '12 STOPS', 'VISITORS', 'TONIGHT'].map((t) => new MeshBasicMaterial({ map: T.bannerTexture(t), transparent: true }));
   let lamp = 0;
   for (let z = 190; z > -470; z -= 30) {
     [[9.7, -1], [-9.7, 1]].forEach(([x, dir]) => {

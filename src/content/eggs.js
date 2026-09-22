@@ -13,7 +13,7 @@
 //                { kind: 'jar' } · { kind: 'ab' } · { kind: 'feed' } · { kind: 'reveal', text } · { kind: 'visitors' }
 
 const postcard = (id, place) => ({
-  id, sign: 'POSTCARDS', title: `A postcard from ${place}`, line: 'Take this room home.',
+  id, sign: 'POSTCARDS', title: `A postcard from ${place}`, line: 'Take this one home.',
   action: { kind: 'download', what: 'postcard', label: 'Download the postcard' },
 });
 
@@ -73,7 +73,7 @@ export const EGGS = {
     { id: 'the-camera', sign: 'D3300', title: 'The camera', line: 'An old Nikon D3300 and a 35mm f/1.8 prime.', tell: 'My best 8 to 12 photos' },
   ],
   'room-12': [
-    { id: 'resume', sign: 'RESUME', title: 'The resume', line: 'One page, every room.', action: { kind: 'download', what: 'resume', label: 'Download the resume' }, tell: 'Drop the latest resume at public/resume.pdf' },
+    { id: 'resume', sign: 'RESUME', title: 'The resume', line: 'One page, every stop.', action: { kind: 'download', what: 'resume', label: 'Download the resume' }, tell: 'Drop the latest resume at public/resume.pdf' },
     { id: 'contact-card', sign: 'CONTACT', title: 'Contact card', line: 'Straight into your phone.', action: { kind: 'download', what: 'vcard', label: 'Save the card' } },
     { id: 'wallpaper', sign: 'WALLPAPER', title: 'Doodle wallpaper', line: 'Your guide, on your lock screen.', action: { kind: 'download', what: 'wallpaper', label: 'Make the wallpaper' } },
   ],

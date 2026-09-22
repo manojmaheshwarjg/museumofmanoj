@@ -18,7 +18,7 @@ export const panelHTML = () => `
     <h2 class="arrival__panel-title">Choose your tour.</h2>
     <fieldset class="booth__modes">
       <legend class="sr-only">How long do you want to stay?</legend>
-      <label class="mode"><input type="radio" name="mode" value="full" checked><span class="mode__card"><b>Full tour</b><span class="mono">about 15 min · every room</span></span></label>
+      <label class="mode"><input type="radio" name="mode" value="full" checked><span class="mode__card"><b>Full tour</b><span class="mono">about 15 min · every stop</span></span></label>
       <label class="mode"><input type="radio" name="mode" value="express"><span class="mode__card"><b>Express</b><span class="mono">about 3 min · the highlights</span></span></label>
       <label class="mode"><input type="radio" name="mode" value="resume"><span class="mode__card"><b>Resume</b><span class="mono">straight to the gift shop</span></span></label>
     </fieldset>
@@ -31,7 +31,7 @@ export const panelHTML = () => `
       <a class="btn btn--ghost" href="#steps" data-go="#steps" data-next hidden>Walk to the entrance</a>
     </div>
     <p class="mono arrival__gate" role="status" data-gate hidden>Print your ticket to go inside.</p>
-    <p class="hand arrival__note" data-after hidden>Don't lose it. It gets a punch in every room.</p>
+    <p class="hand arrival__note" data-after hidden>Don't lose it. It gets a punch at every stop.</p>
   </form>`;
 
 export const ticketHTML = () => {
@@ -46,7 +46,7 @@ export const ticketHTML = () => {
         <div><span class="mono">date</span><b>${date}</b></div>
       </div>
       <div class="ticket__holes">${Array.from({ length: ROOM_COUNT }, () => '<i></i>').join('')}</div>
-      <div class="ticket__foot"><span class="ticket__barcode"></span><span class="mono">12 rooms · 12 punches</span></div>
+      <div class="ticket__foot"><span class="ticket__barcode"></span><span class="mono">12 stops · 12 punches</span></div>
     </div>`;
 };
 

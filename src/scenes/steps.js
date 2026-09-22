@@ -17,7 +17,7 @@ const BEATS = [
   { at: 0, pose: 'wave', line: "Hi, I'm Manoj. I'll be your guide tonight." },
   { at: 0.1, pose: 'offer', line: "Hold my hand. I'll walk you in." },
   { at: 0.3, pose: 'offer', line: 'Mind the third step. Everyone trips on it.' },
-  { at: 0.52, pose: 'offer', line: "Twelve rooms. I promise they're short." },
+  { at: 0.52, pose: 'offer', line: "Twelve stops. I promise they're short." },
   { at: 0.72, pose: 'offer', line: 'Almost there. Ready?' },
   { at: 0.84, pose: 'point', line: 'After you.' },
 ];

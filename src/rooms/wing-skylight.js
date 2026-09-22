@@ -127,7 +127,7 @@ const guestbookHTML = () => `
       <p class="guestbook__note">Notes stay on this device until the public guestbook is switched on.</p>
     </div>
     <form class="guestbook__form" data-guestbook>
-      <label><span class="mono">Your note</span><textarea name="note" maxlength="180" rows="3" required placeholder="The leap room got me."></textarea></label>
+      <label><span class="mono">Your note</span><textarea name="note" maxlength="180" rows="3" required placeholder="The leap got me."></textarea></label>
       <label><span class="mono">Signed</span><input name="name" maxlength="30" autocomplete="given-name" placeholder="visitor ${formatVisitor(state.visitor)}"></label>
       <button class="btn btn--ink" type="submit">Sign the guestbook</button>
     </form>
@@ -139,7 +139,7 @@ const giftHTML = () => `
     <p class="mono">The gift shop</p>
     <h3 class="t-h2" id="gift-title">Take something home.</h3>
     <ul class="gift__shelf">
-      <li class="gift__item"><span class="gift__icon" aria-hidden="true">PDF</span><h4>The resume</h4><p>One page, every room.</p><a class="btn btn--ink" href="resume.pdf" download>Download</a></li>
+      <li class="gift__item"><span class="gift__icon" aria-hidden="true">PDF</span><h4>The resume</h4><p>One page, every stop.</p><a class="btn btn--ink" href="resume.pdf" download>Download</a></li>
       <li class="gift__item"><span class="gift__icon" aria-hidden="true">VCF</span><h4>Contact card</h4><p>Straight into your phone.</p><button class="btn btn--ink" type="button" data-vcard>Save the card</button></li>
       <li class="gift__item"><span class="gift__icon" aria-hidden="true">PNG</span><h4>Doodle wallpaper</h4><p>Your guide, on your lock screen.</p><button class="btn btn--ink" type="button" data-wallpaper>Make wallpaper</button></li>
     </ul>
@@ -160,7 +160,7 @@ const exitHTML = () => `
         <div><dt>Visitor</dt><dd data-r-visitor></dd></div>
         <div><dt>Tour</dt><dd data-r-mode></dd></div>
         <div><dt>Time inside</dt><dd data-r-time></dd></div>
-        <div><dt>Rooms punched</dt><dd data-r-rooms></dd></div>
+        <div><dt>Stops punched</dt><dd data-r-rooms></dd></div>
         <div><dt>Admission</dt><dd>$0.00</dd></div>
         <div><dt>Tip</dt><dd><a href="mailto:manojmaheshwarjg@gmail.com">Say hi</a></dd></div>
       </dl>

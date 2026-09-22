@@ -165,7 +165,7 @@ export function openEgg(egg, roomId) {
 export function eggButtonsHTML(roomId) {
   const eggs = EGGS[roomId] || [];
   if (!eggs.length) return '';
-  return `<div class="room__eggs" aria-label="Easter eggs in this room"><span class="mono">Things to find</span>${eggs.map((egg) => `<button class="room__egg${found.has(egg.id) ? ' is-found' : ''}" type="button" data-egg="${egg.id}" data-egg-room="${roomId}">${egg.title}</button>`).join('')}</div>`;
+  return `<div class="room__eggs" aria-label="Easter eggs on this page"><span class="mono">Things to find</span>${eggs.map((egg) => `<button class="room__egg${found.has(egg.id) ? ' is-found' : ''}" type="button" data-egg="${egg.id}" data-egg-room="${roomId}">${egg.title}</button>`).join('')}</div>`;
 }
 
 export function initEggs() {

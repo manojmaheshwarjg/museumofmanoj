@@ -38,7 +38,7 @@ export const ROOMS = [
       },
       {
         art: 'offer-letter', effect: 'confetti', label: 'beat 4 · the letter', title: 'An envelope arrives',
-        text: 'Caps go up at graduation, and an offer comes in from Teknuance. The ramp leads to the next room.',
+        text: 'Caps go up at graduation, and an offer comes in from Teknuance. The ramp leads to what came next.',
         photo: { file: '02-graduation.jpg', caption: 'Graduation', ar: '4 / 3' },
       },
     ],
@@ -183,7 +183,7 @@ export const ROOMS = [
       },
       {
         art: 'notebook-ai', effect: 'underline', label: 'beat 4 · the question', title: 'What next?',
-        text: '$20k in delivery revenue, and one question in the notebook that leads straight into the next room.',
+        text: '$20k in delivery revenue, and one question in the notebook that leads straight into the next one.',
         stat: { value: '$20K', label: 'delivery revenue' },
         tell: ['The moment I chose AI'],
       },
@@ -194,7 +194,7 @@ export const ROOMS = [
   {
     n: 7, id: 'room-07', no: '07', tone: 'night', outfit: 'tee', layout: 'theater',
     title: 'The leap', place: 'Chennai to Buffalo', dates: '2024', time: '2.5 min',
-    guide: { pose: 'idle', line: 'The biggest room in the museum. Take your time in here.' },
+    guide: { pose: 'idle', line: 'The longest stop on the tour. Take your time in here.' },
     fourD: 'The departures board flips, the seat rumbles on takeoff, and cold air greets you on landing.',
     beats: [
       {
@@ -224,7 +224,7 @@ export const ROOMS = [
       },
       {
         art: 'goodbye', effect: 'walk', label: 'beat 6 · goodbye at home', title: 'Mom and dad at the door', slow: true,
-        text: 'The hardest scene in the museum gets the quietest room.',
+        text: 'The hardest scene in the museum gets the quietest telling.',
         photo: { file: '07-parents.jpg', caption: 'Home, before the airport', ar: '4 / 3' },
         tell: ['Only what I want to share here'],
       },
@@ -254,7 +254,7 @@ export const ROOMS = [
     n: 8, id: 'room-08', no: '08', tone: 'paper', outfit: 'puffer', ambient: 'snow',
     title: 'Buffalo', place: 'University at Buffalo', dates: 'Aug 2024 to Jan 2026', time: '90 s',
     guide: { pose: 'wave', line: 'Buffalo. Good thing I brought the jacket.' },
-    fourD: 'Snow falls inside the room and piles up in the corners. The projects here are still being built.',
+    fourD: 'Snow falls across the page and piles up in the corners. The projects here are still being built.',
     beats: [
       {
         art: 'snow-window', effect: 'flakes', label: 'beat 1 · first snow', title: 'First snow',
@@ -297,7 +297,7 @@ export const ROOMS = [
     n: 9, id: 'room-09', no: '09', tone: 'night', outfit: 'puffer',
     title: 'New York', place: 'VivPro · New Jersey', dates: 'Mar 2026 to now', time: '75 s',
     guide: { pose: 'point', line: 'New York. You walked past it on the way in.' },
-    fourD: 'The skyline rises out of the ramp wall, prototypes stack up like floors, and a 24-hour clock takes over the room.',
+    fourD: 'The skyline rises out of the ramp wall, prototypes stack up like floors, and a 24-hour clock takes over the page.',
     beats: [
       {
         art: 'skyline-suitcase', effect: 'windows', label: 'beat 1 · arriving', title: 'The New York chapter',
@@ -382,31 +382,31 @@ export const ROOMS = [
     fourD: 'A photo exhibition, an aquarium that bubbles when you tap it, and steam from the coffee bar.',
     items: [
       {
-        kind: 'photos', label: 'room 1 · photo exhibition', title: 'Lens life',
+        kind: 'photos', label: 'no. 1 · photo exhibition', title: 'Lens life',
         text: 'I still shoot with my old Nikon D3300 and a 35mm f/1.8 prime. Sometimes I cheat with a Google Pixel 7.',
         photos: ['11-photo-1.jpg', '11-photo-2.jpg', '11-photo-3.jpg', '11-photo-4.jpg', '11-photo-5.jpg', '11-photo-6.jpg'],
         tell: ['My best 8 to 12 photos'],
       },
       {
-        kind: 'nano', label: "room 2 · Nano's aquarium", title: 'Fish dad',
+        kind: 'nano', label: "no. 2 · Nano's aquarium", title: 'Fish dad',
         text: 'Nano, my betta fish, sits on my desk while I work. First pet, and surprisingly good at keeping me calm.',
         photo: { file: '11-nano.jpg', caption: 'Nano', ar: '1 / 1' },
       },
       {
-        kind: 'coffee', label: 'room 3 · the coffee bar', title: 'Cups 2 to 4',
+        kind: 'coffee', label: 'no. 3 · the coffee bar', title: 'Cups 2 to 4',
         text: "I'm the one who orders single-origin beans online. My best code happens between cups 2 and 4.",
       },
       {
-        kind: 'wip', label: 'room 4 · unfinished works', title: '12 works in progress',
+        kind: 'wip', label: 'no. 4 · unfinished works', title: '12 works in progress',
         text: '12 half-finished side projects and zero regrets. Learning by doing, one repo at a time.',
         tell: ['The side project list'],
       },
       {
-        kind: 'pixel', label: 'room 5 · the 2px room', title: 'Two pixels off',
+        kind: 'pixel', label: 'no. 5 · the 2px corner', title: 'Two pixels off',
         text: 'One giant frame, 2 pixels out of line, and a magnifying glass. Pixel-perfect, on purpose.',
       },
       {
-        kind: 'friends', label: 'room 6 · the friend test', title: 'The non-tech friend test',
+        kind: 'friends', label: 'no. 6 · the friend test', title: 'The non-tech friend test',
         text: 'Every feature gets tested on non-tech friends first. If they get confused, back to the drawing board.',
       },
     ],
@@ -416,7 +416,7 @@ export const ROOMS = [
   {
     n: 12, id: 'room-12', no: '12', tone: 'paper', outfit: 'tee', layout: 'skylight',
     title: "Skylight: what's next", place: 'The top of the spiral', dates: 'from here', time: '45 s',
-    guide: { pose: 'wave', line: "Last room. It's still under construction, on purpose." },
+    guide: { pose: 'wave', line: "Last stop. It's still under construction, on purpose." },
     fourD: 'The skylight opens onto a New York dawn, and your ticket gets its last punch.',
     plan: [
       { days: 'Days 1 to 30', phase: 'Absorb', goal: 'Learn the product, the users and the numbers.', steps: ['Talk to 20 customers', 'Sit in on sales and support calls', 'Map the funnel, signup to activation'], result: 'A ranked list of the problems that matter' },

@@ -33,7 +33,7 @@ export function init() {
   const rooms = STOPS.filter((s) => s.id.startsWith('room-'));
   const note = {
     express: "Express tour: I'll skip the long bits.",
-    resume: 'In a hurry? The resume is in the gift shop, room 12.',
+    resume: 'In a hurry? The resume is in the gift shop, at the last stop.',
   }[state.mode] || '';
 
   root.innerHTML = `
@@ -42,15 +42,15 @@ export function init() {
         <header class="lobby__head">
           <p class="mono lobby__kicker">01 · The lobby</p>
           <h2 class="t-h1">Welcome in.</h2>
-          <p class="lead lobby__lead">Twelve rooms, in the order they happened. Every room is one moment, a few photos, and the work that came out of it.</p>
+          <p class="lead lobby__lead">Twelve stops, in the order they happened. Each one is a moment, a few photos, and the work that came out of it.</p>
         </header>
 
         <div class="lobby__guide-wrap">
           <div class="lobby__guide"></div>
-          <div class="bubble lobby__bubble" data-bubble>Every room is a moment I lived. Let's start where I did.</div>
+          <div class="bubble lobby__bubble" data-bubble>Every stop is a moment I lived. Let's start where I did.</div>
         </div>
 
-        <nav class="lobby__board" aria-label="Rooms in this museum">
+        <nav class="lobby__board" aria-label="Stops on the tour">
           <div class="lobby__board-head dotf"><span>FLOOR DIRECTORY</span><span>TIME</span></div>
           <ol>${rooms.map((r) => `
             <li><a href="#${r.id}" data-go="#${r.id}"><span>${r.no}</span><span>${r.title}</span><span class="lobby__time">${r.time}</span></a></li>`).join('')}
