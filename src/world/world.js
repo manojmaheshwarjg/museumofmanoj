@@ -441,8 +441,14 @@ export function createWorld(canvas) {
   let signPhase = 0;
 
   function resize(w, h) {
-    width = Math.max(1, w);
-    height = Math.max(1, h);
+    const nextW = Math.max(1, w);
+    const nextH = Math.max(1, h);
+    // Phones fire a resize every time the address bar slides away, and giving a canvas its size rebuilds the
+    // drawing buffer even when the numbers have not moved: several megabytes at this pixel ratio, in the middle
+    // of a scroll. That rebuild is a dropped frame and a re-framed shot, which is what reads as a jump.
+    if (nextW === width && nextH === height) return;
+    width = nextW;
+    height = nextH;
     renderer.setSize(width, height, false);
     const aspect = width / height;
     camera.aspect = aspect;
@@ -456,8 +462,16 @@ export function createWorld(canvas) {
 
   function frame(time, dt, { settle = false } = {}) {
     const y = window.scrollY;
-    if (settle || Math.abs(y - railY) > window.innerHeight * 4) railY = y;
-    else railY += (y - railY) * (1 - Math.exp(-dt * 5));
+    const gap = y - railY;
+    // The camera follows the scroll rather than tracking it exactly, so the walk keeps moving when the scroll
+    // stops dead. A dropped frame during a fast fling can open a gap of a screen or two, and cutting straight
+    // across one is the jump people notice, so a wide gap is closed fast but still in a continuous move. Only a
+    // distance no fling could cover, which means a link or a restored position, is taken at once.
+    if (settle || Math.abs(gap) > window.innerHeight * 8) railY = y;
+    else {
+      const far = Math.min(1, Math.abs(gap) / (window.innerHeight * 2));
+      railY += gap * (1 - Math.exp(-dt * (5 + 30 * far * far)));
+    }
     // Past the entrance the page is plain sections and the canvas is completely covered. Drawing a city nobody
     // can see costs a frame's work on every scroll of the rest of the page, so stop until you come back up.
     const climb = rail.span('steps');

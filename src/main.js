@@ -3,6 +3,7 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
+import 'lenis/dist/lenis.css';
 import { state, on, formatVisitor, ROOM_COUNT } from './lib/state.js';
 import { registerVisit } from './lib/visitor.js';
 import { startBoil, loadPhotos, reducedMotion } from './lib/doodle.js';
