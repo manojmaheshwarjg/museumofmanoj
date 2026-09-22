@@ -8,6 +8,12 @@
       var saved = JSON.parse(localStorage.getItem('manoj-museum:v1') || '{}');
       if (saved.ticketPrinted && /^\/experience\/[a-z0-9-]+\/?$/.test(location.pathname)) document.documentElement.dataset.page = 'experience';
     } catch (e) {}
+    // The walk in needs the 3D city, so its code starts downloading now, alongside everything else, instead of once
+    // the app is running. A build writes the file names in (vite.config.js); an experience page doesn't need them.
+    var city = '__CITY_CHUNKS__';
+    if (Array.isArray(city) && document.documentElement.dataset.page !== 'experience' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      city.forEach(function (href) { var link = document.createElement('link'); link.rel = 'modulepreload'; link.href = href; document.head.appendChild(link); });
+    }
     // Page to page is a view transition. One that can't run (in a hidden tab, say) is skipped quietly, not thrown.
     var quiet = function (e) { if (e.viewTransition) { e.viewTransition.ready.catch(function () {}); e.viewTransition.finished.catch(function () {}); } };
     addEventListener('pageswap', quiet);
@@ -32,9 +38,11 @@
   <meta property="og:title" content="Museum of Manoj">
   <meta property="og:description" content="A 15-minute walk through one life, from Chennai to New York.">
   <meta property="og:type" content="website">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Caveat:wght@500;700&family=Doto:wght@700;900&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
+  <link rel="preload" href="/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/caveat-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/doto-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/src/styles/base.css">
   <link rel="stylesheet" href="/src/styles/scenes.css">
   <link rel="stylesheet" href="/src/styles/rooms.css">
@@ -71,7 +79,7 @@
         var dt = Math.min(0.1, (now - last) / 1000);
         last = now;
         var goal = finishing ? 1 : Math.min(target, 0.96);
-        shown += (goal - shown) * (1 - Math.exp(-dt * (finishing ? 12 : 4)));
+        shown += (goal - shown) * (1 - Math.exp(-dt * (finishing ? 30 : 6)));
         pct.textContent = Math.round(shown * 100) + '%';
         if (finishing && shown > 0.995) { finishing(); return; }
         requestAnimationFrame(tick);
@@ -83,7 +91,7 @@
           var done = false;
           finishing = function () { if (!done) { done = true; pct.textContent = '100%'; resolve(); } };
           // A hidden tab never paints, so don't wait on it.
-          setTimeout(finishing, 900);
+          setTimeout(finishing, 350);
         });
       }
       function hide() {
@@ -93,7 +101,7 @@
         removeEventListener('keydown', keys, true);
         root.classList.remove('is-loading');
         loader.classList.add('is-done');
-        setTimeout(function () { loader.remove(); }, 700);
+        setTimeout(function () { loader.remove(); }, 500);
       }
       window.__loader = {
         set: function (p) { target = Math.max(target, Math.min(0.96, p)); },

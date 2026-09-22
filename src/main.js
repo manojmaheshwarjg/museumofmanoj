@@ -4,6 +4,8 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
+import { inject } from '@vercel/analytics';
+import { injectSpeedInsights } from '@vercel/speed-insights';
 import { state, on, formatVisitor, ROOM_COUNT } from './lib/state.js';
 import { registerVisit } from './lib/visitor.js';
 import { startBoil, loadPhotos, reducedMotion } from './lib/doodle.js';
@@ -15,6 +17,12 @@ import { goInside } from './lib/entrance.js';
 
 gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({ ignoreMobileResize: true });
+
+// Page views and real visitors' load times, in the Vercel dashboard (Analytics and Speed Insights). Live site only.
+if (import.meta.env.PROD) {
+  inject({ mode: 'production' });
+  injectSpeedInsights();
+}
 
 // Weighted smooth scrolling for mouse and trackpad. Phones keep their native momentum.
 if (matchMedia('(pointer: fine)').matches && !reducedMotion()) {
@@ -46,8 +54,9 @@ const paintVisitor = () => {
   document.querySelectorAll('[data-visitor]').forEach((n) => { n.textContent = formatVisitor(state.visitor); });
 };
 paintVisitor();
-// Ask the counter for this browser's number right away; scenes wait briefly for it.
-const counted = registerVisit();
+// Ask the counter for this browser's number right away. Nothing waits for it: wherever the number shows (the
+// billboard, the booth, the ticket), it's filled in the moment it arrives.
+registerVisit();
 
 // Which page this is. The home page is the walk in; an experience page is one stop of the tour.
 const docEl = document.documentElement;
@@ -262,6 +271,8 @@ async function open(world, landing) {
   const drawing = Boolean(world?.drawing);
   if (drawing) world.intro({ quick: seen });
   loader?.hide();
+  // The rest of the avenue goes on the GPU now, between frames, well before the walk reaches it.
+  world?.warmRest();
   try { localStorage.setItem(DRAWN, '1'); } catch { /* storage blocked */ }
   if (!autopilot) return;
   if (drawing) await untilDrawn(world, 0.55);
@@ -285,10 +296,10 @@ function riseThroughDoors() {
 }
 
 async function boot() {
-  // The walk in loads all at once: the fonts, the 3D city (its download, build and warm-up are the loader's progress),
-  // and this visitor's number for the billboard. A slow font server doesn't hold the museum up for more than 4 seconds.
+  // The walk in loads all at once: the fonts (our own, preloaded by index.html) and the 3D city (its download, build
+  // and warm-up are the loader's progress). Fonts slow to arrive don't hold the museum up for more than 3 seconds.
   const fonts = document.fonts
-    ? Promise.race([Promise.allSettled(FACES.map((face) => document.fonts.load(face))), new Promise((resolve) => { setTimeout(resolve, 4000); })])
+    ? Promise.race([Promise.allSettled(FACES.map((face) => document.fonts.load(face))), new Promise((resolve) => { setTimeout(resolve, 3000); })])
     : Promise.resolve();
   const city = onPage
     ? Promise.resolve(null)
@@ -296,9 +307,6 @@ async function boot() {
   city.then((world) => world?.hold(true));
   await fonts;
   loader?.set(0.1);
-  // The home page waits a moment for this visitor's number, because the billboard shows it. An experience page
-  // doesn't show it, so it draws straight away.
-  if (!onPage) await Promise.race([counted, new Promise((resolve) => { setTimeout(resolve, 1500); })]);
   for (const [selector, load] of scenes) {
     if (!document.querySelector(selector)) continue;
     try {

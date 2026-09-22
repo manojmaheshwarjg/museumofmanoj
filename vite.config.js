@@ -95,11 +95,31 @@ function photoSizes() {
   };
 }
 
+// The 3D city's code, named in the page so the walk in can start downloading it before the app runs (index.html
+// reads the list). Only the build knows the hashed file names.
+function preloadCity() {
+  return {
+    name: 'museum-preload-city',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, { bundle, chunk: entry }) {
+        const chunks = Object.values(bundle || {}).filter((c) => c.type === 'chunk');
+        const city = chunks.find((c) => c.facadeModuleId?.endsWith('/src/world/stage.js'));
+        if (!city) return html;
+        const loaded = new Set([entry?.fileName, ...(entry?.imports || [])]);
+        const files = [city.fileName, ...city.imports].filter((f) => !loaded.has(f)).map((f) => `/${f}`);
+        return html.replace("'__CITY_CHUNKS__'", JSON.stringify(files));
+      },
+    },
+  };
+}
+
 export default defineConfig({
   // Absolute, so pages at /experience/<slug> find the same assets as the home page.
   base: '/',
   server: { port: 5174, strictPort: true },
   // The resume viewer loads PDF.js on demand; bundled up front in development, so opening it doesn't reload the page.
   optimizeDeps: { include: ['pdfjs-dist'] },
-  plugins: [localVisitorCounter(), stopPages(), photoSizes()],
+  plugins: [localVisitorCounter(), stopPages(), photoSizes(), preloadCity()],
 });

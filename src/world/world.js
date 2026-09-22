@@ -4,8 +4,8 @@
 
 import {
   AdditiveBlending, Box3, BoxGeometry, BufferAttribute, BufferGeometry, CylinderGeometry, EdgesGeometry, Float32BufferAttribute,
-  Fog, Group, InstancedBufferAttribute, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, Points, PointsMaterial,
-  RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, WebGLRenderer, WebGLRenderTarget,
+  Fog, Frustum, Group, InstancedBufferAttribute, Matrix4, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, Points,
+  PointsMaterial, RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, WebGLRenderer, WebGLRenderTarget,
 } from 'three';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
@@ -749,45 +749,83 @@ export async function createWorld(canvas, { onProgress } = {}) {
     renderer.render(scene, camera);
   }
 
-  // Before the city is first seen: compile every shader it will use (the intro's, then its own) and put every texture
-  // and buffer on the GPU. It happens behind the loader, a piece at a time, instead of in the middle of the first walk.
-  async function warm({ onProgress: step } = {}) {
-    const drawing = intro.state !== 'done';
-    if (drawing) await renderer.compileAsync(scene, camera);
-    useStandIns(false);
-    await renderer.compileAsync(scene, camera);
-    useStandIns(drawing);
-    step?.(0.25);
+  // Before the city is first seen, the GPU gets ready for just the first view: the drawing-in's shaders, and the
+  // textures and buffers of what's in front of the camera. The finished city's own shaders start compiling at the same
+  // time without being waited for (the driver works on them in parallel), and everything further up the avenue goes on
+  // the GPU once the city is showing (warmRest), a little at a time between frames, well before the walk reaches it.
+  const frustum = new Frustum();
+  const viewProjection = new Matrix4();
+  let later = [];
+  const renderables = () => {
+    const list = [];
+    scene.traverse((o) => { if (o.isMesh || o.isSprite || o.isPoints || o.isLine) list.push(o); });
+    return list;
+  };
+  const nextIdle = () => new Promise((resolve) => {
+    if (window.requestIdleCallback) requestIdleCallback(() => resolve(), { timeout: 250 });
+    else setTimeout(resolve, 32);
+  });
+
+  // Textures and buffers onto the GPU for part of the scene: each texture uploaded, then the objects drawn once,
+  // unculled, into a tiny target, a batch at a time. Every object is back as it was before the next frame can run.
+  async function upload(list, { batch = 60, step, idle = false } = {}) {
     const textures = new Set();
-    const renderables = [];
-    scene.traverse((o) => {
-      if (!(o.isMesh || o.isSprite || o.isPoints || o.isLine)) return;
-      renderables.push(o);
-      (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { if (m?.map) textures.add(m.map); });
-    });
-    let uploaded = 0;
+    list.forEach((o) => (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { if (m?.map) textures.add(m.map); }));
+    const total = textures.size + Math.ceil(list.length / batch) || 1;
+    const rest = idle ? nextIdle : () => pause();
+    let done = 0;
     for (const texture of textures) {
       renderer.initTexture(texture);
-      uploaded += 1;
-      await pause();
-      step?.(0.25 + (0.55 * uploaded) / textures.size);
+      done += 1;
+      step?.(done / total);
+      await rest();
     }
-    // Buffers: draw everything once, unculled, into a tiny target, a batch at a time.
+    const all = renderables();
     const target = new WebGLRenderTarget(8, 8);
-    const saved = renderables.map((o) => [o.visible, o.frustumCulled]);
-    const before = renderer.getRenderTarget();
-    renderer.setRenderTarget(target);
-    for (let i = 0; i < renderables.length; i += 60) {
-      renderables.forEach((o, j) => { o.visible = j >= i && j < i + 60; o.frustumCulled = false; });
+    for (let i = 0; i < list.length; i += batch) {
+      const part = new Set(list.slice(i, i + batch));
+      const saved = all.map((o) => [o.visible, o.frustumCulled]);
+      all.forEach((o) => { o.visible = part.has(o); o.frustumCulled = false; });
+      const before = renderer.getRenderTarget();
+      renderer.setRenderTarget(target);
       renderer.render(scene, camera);
+      renderer.setRenderTarget(before);
+      all.forEach((o, j) => { [o.visible, o.frustumCulled] = saved[j]; });
+      done += 1;
+      step?.(done / total);
       slice = 0;
-      await pause();
-      step?.(0.8 + (0.2 * Math.min(renderables.length, i + 60)) / renderables.length);
+      await rest();
     }
-    renderables.forEach((o, j) => { [o.visible, o.frustumCulled] = saved[j]; });
-    renderer.setRenderTarget(before);
     target.dispose();
+  }
+
+  async function warm({ onProgress: step } = {}) {
+    if (intro.state !== 'done') {
+      useStandIns(false);
+      renderer.compile(scene, camera);
+      useStandIns(true);
+    }
+    await renderer.compileAsync(scene, camera);
+    step?.(0.25);
+    // What the camera sees first, from where it starts.
+    frame(performance.now() / 1000, 1 / 60, { settle: true });
+    camera.updateMatrixWorld();
+    scene.updateMatrixWorld();
+    frustum.setFromProjectionMatrix(viewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+    const now = [];
+    later = [];
+    renderables().forEach((o) => {
+      const seen = !o.frustumCulled || (o.isSprite ? frustum.intersectsSprite(o) : frustum.intersectsObject(o));
+      (seen ? now : later).push(o);
+    });
+    await upload(now, { step: (done) => step?.(0.25 + 0.75 * done) });
     step?.(1);
+  }
+
+  function warmRest() {
+    const list = later;
+    later = [];
+    if (list.length) upload(list, { batch: 20, idle: true }).catch(() => {});
   }
 
   // Screen position of a point on the booth, for pinning HTML to it.
@@ -865,7 +903,7 @@ export async function createWorld(canvas, { onProgress } = {}) {
   onProgress?.(1);
   return {
     renderer, camera, rail, scene,
-    anchor, showVisitor, warm,
+    anchor, showVisitor, warm, warmRest,
     // Stop drawing while the loader covers the city, and start again when it lifts.
     hold(on) { held = on; },
     // The drawing-in (reveal.js). Quick is for visitors who have seen it before; skip goes straight to the finished city.
