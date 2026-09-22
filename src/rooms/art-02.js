@@ -1,76 +1,81 @@
-// Room 02 · Chennai, where it began. Illustrations for each beat, drawn at 600 × 420.
+// Room 02 · Chennai is where the story starts. Illustrations for each beat, drawn at 600 × 420.
 // Elements with fx-* classes are the parts the 4D effects animate.
 
 export const ART = {
-  'chennai-street': (k) => {
-    const { sk, ink, ground, hatch, dots } = k;
-    // power lines and a pole
-    k.pen('M-10 116 Q260 150 560 94', { 'stroke-width': 1.4, opacity: 0.6 });
-    k.pen('M-10 132 Q270 168 560 110', { 'stroke-width': 1.4, opacity: 0.6 });
-    sk.line(556, 78, 556, 332, { strokeWidth: 3 });
-    sk.line(538, 94, 574, 94, { strokeWidth: 2 });
-    sk.circle(452, 120, 84, { fill: hatch, fillStyle: 'solid', strokeWidth: 2 });
+  // Marina Beach: the sun coming up out of the Bay of Bengal, the lighthouse, the sound of the water, and the bike.
+  marina: (k) => {
+    const { sk, ink, ground, hatch, dots, muted } = k;
+    sk.circle(300, 204, 116, { fill: hatch, fillStyle: 'solid', strokeWidth: 2, seed: 2 });
+    k.pen('M176 74 q8 -8 16 0 q8 -8 16 0', { 'stroke-width': 1.8 });
+    k.pen('M216 100 q6 -6 12 0 q6 -6 12 0', { 'stroke-width': 1.6 });
 
-    // a temple gopuram, tier on tier
-    [[250, 82, 110], [216, 34, 92], [186, 30, 74], [160, 26, 56], [138, 22, 38]].forEach(([y, h, w], i) => {
-      sk.rect(140 - w / 2, y, w, h, { fill: i % 2 ? dots : ground, fillStyle: 'solid', seed: 10 + i });
-    });
-    sk.circle(140, 128, 14, { fill: ink, fillStyle: 'solid' });
-    sk.path('M126 332 v-26 q14-22 28 0 v26', { fill: ink, fillStyle: 'solid' });
-
-    // a low building
-    sk.rect(214, 226, 96, 106, { fill: ground, fillStyle: 'solid', seed: 21 });
-    [[230, 246], [268, 246], [230, 282], [268, 282]].forEach(([x, y]) => sk.rect(x, y, 22, 22, { strokeWidth: 1.6 }));
-
-    // the tea stall and its kettle
-    sk.rect(368, 250, 112, 82, { fill: ground, fillStyle: 'solid', seed: 31 });
-    sk.path('M356 250 L372 214 H476 L492 250 Z', { fill: hatch, fillStyle: 'solid', seed: 32 });
-    for (let x = 356; x < 492; x += 17) k.pen(`M${x} 250 q8.5 12 17 0`, { 'stroke-width': 1.8 });
-    k.mono(424, 300, 'TEA', { 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 700 });
-    sk.path('M398 250 q0-22 18-22 q18 0 18 22 z', { fill: ink, fillStyle: 'solid' });
-    sk.line(434, 238, 448, 228, { strokeWidth: 3 });
-    const steam = k.group({ class: 'fx-steam' });
-    ['M408 222 q-10-14 0-26 q10-12 0-26', 'M420 220 q-10-16 0-30 q10-14 0-30', 'M432 222 q-8-12 0-24 q8-10 0-22'].forEach((d) => {
-      k.pen(d, { 'stroke-width': 2, opacity: 0.75, class: 'fx-wisp' }, steam);
+    // the sea, with rows of crests rolling in
+    sk.rect(-10, 204, 620, 62, { fill: ground, fillStyle: 'solid', stroke: 'none', seed: 3 });
+    sk.line(-10, 204, 610, 204, { strokeWidth: 2.2 });
+    const waves = k.group({ class: 'fx-waves' });
+    [[218, 0, 30], [234, 18, 36], [252, 6, 44]].forEach(([y, offset, step], row) => {
+      let d = '';
+      for (let x = -40 + offset; x < 640; x += step + 16) d += `M${x} ${y} q${step / 4} ${-5 - row} ${step / 2} 0 `;
+      k.pen(d, { 'stroke-width': 1.7 + row * 0.2, opacity: 0.7 + row * 0.1, class: 'fx-wave' }, waves);
     });
 
-    // the road
-    sk.line(-10, 332, 610, 332, { strokeWidth: 2.6 });
-    for (let x = 10; x < 600; x += 60) sk.line(x, 394, x + 30, 394, { strokeWidth: 2 });
-
-    // an auto rickshaw, rattling past
-    const auto = k.group({ class: 'fx-auto' });
-    const a = k.into(auto);
-    a.path('M186 354 V300 Q188 254 236 250 H292 Q322 254 326 300 V354 Z', { fill: dots, fillStyle: 'solid', seed: 41 });
-    a.rect(198, 298, 44, 46, { fill: ground, fillStyle: 'solid', seed: 42 });
-    a.path('M292 262 H314 Q320 280 320 300 H292 Z', { fill: ground, fillStyle: 'solid', seed: 43 });
-    a.circle(214, 362, 32, { fill: ink, fillStyle: 'solid', seed: 44 });
-    a.circle(306, 362, 32, { fill: ink, fillStyle: 'solid', seed: 45 });
-    a.line(150, 326, 176, 326, { strokeWidth: 2 });
-    a.line(138, 340, 172, 340, { strokeWidth: 2 });
-  },
-
-  notebook: (k) => {
-    const { sk, ground, muted, hatch } = k;
-    const book = k.group({ transform: 'rotate(-3 300 220)' });
-    const b = k.into(book);
-    b.rect(92, 70, 208, 290, { fill: ground, fillStyle: 'solid', seed: 3 });
-    b.rect(300, 70, 208, 290, { fill: ground, fillStyle: 'solid', seed: 4 });
-    for (let y = 104; y < 350; y += 24) {
-      k.pen(`M110 ${y}H286`, { stroke: muted, 'stroke-width': 1 }, book);
-      k.pen(`M314 ${y}H490`, { stroke: muted, 'stroke-width': 1 }, book);
-    }
-    for (let y = 86; y < 350; y += 22) b.circle(300, y, 9, { strokeWidth: 1.6 });
-    const lines = k.group({ class: 'fx-write' }, book);
-    [[120, 100, 150], [120, 124, 162], [120, 148, 124], [120, 172, 158], [120, 196, 140], [120, 220, 104], [120, 244, 150],
-      [322, 100, 150], [322, 124, 132], [322, 148, 156], [322, 172, 92]].forEach(([x, y, w]) => {
-      k.pen(k.scribble(x, y - 4, w, 2.2), { 'stroke-width': 2, class: 'fx-line' }, lines);
+    // the sand, a line of foam where the water runs up it, and footprints
+    sk.path('M-10 268 Q150 256 300 266 Q450 276 610 262 V430 H-10 Z', { fill: ground, fillStyle: 'solid', seed: 5 });
+    let foam = 'M-10 268';
+    for (let x = -10; x < 610; x += 24) foam += ` q12 ${x % 48 ? 7 : 5} 24 ${x % 48 ? -1 : 1}`;
+    k.pen(foam, { 'stroke-width': 1.8, class: 'fx-foam' });
+    for (let i = 0; i < 70; i += 1) k.el('circle', { cx: (k.rnd() * 600).toFixed(1), cy: (290 + k.rnd() * 124).toFixed(1), r: 1.1, fill: muted });
+    [[118, 404], [138, 380], [150, 354], [170, 332], [180, 306]].forEach(([x, y], i) => {
+      k.el('ellipse', { cx: x + (i % 2 ? 7 : -7), cy: y, rx: 4, ry: 7, fill: ink, opacity: 0.45, transform: `rotate(-24 ${x} ${y})` });
     });
-    k.pen('M404 230 l10 22 24 2 -18 16 6 24 -22-12 -22 12 6-24 -18-16 24-2z', { 'stroke-width': 2 }, book);
-    const pencil = k.group({ transform: 'rotate(-32 470 330)' });
-    const p = k.into(pencil);
-    p.rect(404, 318, 130, 22, { fill: hatch, fillStyle: 'solid', seed: 8 });
-    p.poly([[404, 318], [404, 340], [380, 329]], { fill: ground, fillStyle: 'solid', seed: 9 });
+
+    // the lighthouse on the Marina, banded, with its lamp lit
+    const edge = (y) => ((300 - y) / 214) * 12;
+    sk.path('M58 300 L70 86 H100 L112 300 Z', { fill: ground, fillStyle: 'solid', seed: 11 });
+    [[128, 150], [196, 218], [262, 284]].forEach(([a, b], i) => {
+      sk.poly([[58 + edge(a), a], [112 - edge(a), a], [112 - edge(b), b], [58 + edge(b), b]], { fill: ink, fillStyle: 'solid', seed: 12 + i });
+    });
+    sk.rect(62, 78, 46, 8, { fill: ink, fillStyle: 'solid', seed: 16 });
+    sk.rect(72, 54, 26, 24, { fill: ground, fillStyle: 'solid', seed: 17 });
+    sk.path('M70 54 Q85 34 100 54 Z', { fill: ink, fillStyle: 'solid', seed: 18 });
+    k.pen('M102 60 L176 40 M102 70 L182 94', { 'stroke-width': 1.6, 'stroke-dasharray': '6 6', opacity: 0.7 });
+
+    // the Gixxer SF 150, parked on the sand, facing the lighthouse
+    k.el('ellipse', { cx: 414, cy: 402, rx: 152, ry: 9, fill: dots, opacity: 0.55 });
+    const bike = k.group({ class: 'fx-bike' });
+    const b = k.into(bike);
+    b.path('M452 262 L500 256 L560 236 L568 246 L520 272 L468 284 Z', { fill: ink, fillStyle: 'solid', seed: 60 });
+    b.rect(556, 238, 9, 6, { fill: ground, fillStyle: 'solid', seed: 61 });
+    b.path('M372 264 Q384 238 414 236 Q444 236 456 264 Z', { fill: ink, fillStyle: 'solid', seed: 62 });
+    b.rect(392, 318, 64, 38, { fill: hatch, fillStyle: 'solid', seed: 63 });
+    for (let x = 400; x < 452; x += 9) k.pen(`M${x} 323 V351`, { 'stroke-width': 1.4 }, bike);
+    b.path('M444 356 L480 350 L534 328 L542 340 L488 364 L446 366 Z', { fill: dots, fillStyle: 'solid', seed: 64 });
+    b.path('M456 344 L506 352 L504 362 L456 356 Z', { fill: ink, fillStyle: 'solid', seed: 65 });
+    b.path('M286 298 L302 270 L346 258 L378 264 L458 266 L474 298 L448 336 L372 338 Q322 328 286 298 Z', { fill: ink, fillStyle: 'solid', seed: 66 });
+    b.path('M302 270 L318 244 L346 250 L346 258 Z', { fill: dots, fillStyle: 'solid', seed: 67 });
+    b.path('M286 298 L296 280 L312 284 L304 300 Z', { fill: ground, fillStyle: 'solid', seed: 68 });
+    k.dot(334, 314, 'GIXXER SF', { 'font-size': 15, fill: ground }, bike);
+    k.pen('M352 256 L368 250 M346 252 L338 238', { 'stroke-width': 3 }, bike);
+    b.circle(336, 233, 12, { fill: ink, fillStyle: 'solid', seed: 69 });
+    k.pen('M312 302 L320 356 M322 300 L330 354', { 'stroke-width': 3.2 }, bike);
+    [[322, 358], [506, 358]].forEach(([cx, cy], i) => {
+      b.circle(cx, cy, 82, { fill: ink, fillStyle: 'solid', seed: 70 + i });
+      b.circle(cx, cy, 52, { fill: ground, fillStyle: 'solid', seed: 72 + i });
+      for (let spoke = 0; spoke < 5; spoke += 1) {
+        const a = (spoke / 5) * Math.PI * 2 - Math.PI / 2;
+        k.pen(`M${cx} ${cy} L${(cx + Math.cos(a) * 24).toFixed(1)} ${(cy + Math.sin(a) * 24).toFixed(1)}`, { 'stroke-width': 3 }, bike);
+      }
+      b.circle(cx, cy, 12, { fill: ink, fillStyle: 'solid', seed: 74 + i });
+    });
+    b.path('M294 334 Q322 308 350 334', { strokeWidth: 3, seed: 76 });
+    k.pen('M436 358 L420 394', { 'stroke-width': 3 }, bike);
+
+    // a note in the margin, with the plate
+    k.hand(484, 50, 'my Gixxer SF 150', { 'text-anchor': 'middle', 'font-size': 28 });
+    sk.rect(412, 62, 144, 36, { fill: ground, fillStyle: 'solid', strokeWidth: 2.2, seed: 77 });
+    k.mono(484, 86, 'TN 02 BD 6**6', { 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 700 });
+    k.pen('M470 104 Q500 168 444 226', { 'stroke-width': 2, 'stroke-dasharray': '5 5' });
+    k.pen('M444 226 l4 -13 M444 226 l13 -4', { 'stroke-width': 2 });
   },
 
   circuit: (k) => {

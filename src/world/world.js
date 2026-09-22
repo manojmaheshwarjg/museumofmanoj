@@ -1,11 +1,11 @@
-// Fifth Avenue at night, in three.js. Central Park on the west side, lit buildings on the east,
+// 26th Avenue at night, in three.js. Central Park on the west side, lit buildings on the east,
 // billboards that greet the visitor by number, cabs heading downtown, and the spiral museum
 // with its ticket booth at 88th Street. Ink lines "boil" between three hand-jittered versions.
 
 import {
-  AdditiveBlending, BoxGeometry, BufferGeometry, CylinderGeometry, EdgesGeometry, Float32BufferAttribute, Fog, Group,
-  Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, Points, PointsMaterial, RingGeometry, Scene, SphereGeometry, Sprite,
-  SpriteMaterial, Vector3, WebGLRenderer,
+  AdditiveBlending, Box3, BoxGeometry, BufferAttribute, BufferGeometry, CylinderGeometry, EdgesGeometry, Float32BufferAttribute,
+  Fog, Group, InstancedBufferAttribute, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, Points, PointsMaterial,
+  RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, WebGLRenderer, WebGLRenderTarget,
 } from 'three';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
@@ -17,6 +17,7 @@ import * as T from './textures.js';
 import { ANCHORS, SHOTS } from './shots.js';
 import { createRail } from './rail.js';
 import { buildMuseum } from './interior.js';
+import { REVEAL, revealMaterial, revealLine, popIn, between } from './reveal.js';
 import { formatVisitor } from '../lib/state.js';
 
 const STREETS = [
@@ -25,7 +26,20 @@ const STREETS = [
 ];
 const LANES = [-6.75, -2.25, 2.25, 6.75];
 
-export function createWorld(canvas) {
+export async function createWorld(canvas, { onProgress } = {}) {
+  // Building the city is a few hundred milliseconds of work on a laptop and a few seconds on a phone. Handing the main
+  // thread back every few milliseconds keeps the loader drawing (and the page responsive) while it happens.
+  let slice = performance.now();
+  const pause = async (done) => {
+    if (done !== undefined) onProgress?.(done);
+    if (performance.now() - slice < 8) return;
+    await new Promise((resolve) => {
+      const channel = new MessageChannel();
+      channel.port1.onmessage = () => resolve();
+      channel.port2.postMessage(0);
+    });
+    slice = performance.now();
+  };
   const small = matchMedia('(max-width: 719px), (pointer: coarse)').matches;
   const rnd = T.seeded(11);
   const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, stencil: true, powerPreference: 'high-performance' });
@@ -58,6 +72,33 @@ export function createWorld(canvas) {
   const flat = (w, d, x, z, y, material) => { const m = new Mesh(new PlaneGeometry(w, d), material); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); city.add(m); return m; };
   const face = (map) => new MeshBasicMaterial({ map });
 
+  // When each piece of the city draws itself in (reveal.js): nearest the opening shot first, working outwards, each
+  // building a little out of step with its neighbours so they arrive one by one rather than as a wave. The ground and
+  // the paint wash in first. This has its own seed, so the city's own random draws, and the city, are unchanged.
+  const ORIGIN = new Vector3(...SHOTS[0].pos);
+  const stagger = T.seeded(4242);
+  const extent = new Box3();
+  const mid = new Vector3();
+  const FILL_LEAD = 0.35;
+  const farFrom = (p) => Math.min(1, Math.max(0, (p.distanceTo(ORIGIN) - 90) / 470));
+  const revealAt = (obj) => {
+    for (let o = obj; o; o = o.parent) if (o.userData.reveal !== undefined) return o.userData.reveal;
+    extent.setFromObject(obj);
+    const far = farFrom(extent.getCenter(mid));
+    const at = extent.max.y < 0.2 ? far * 0.3 : 0.2 + far * 1.1 + stagger() * 0.3;
+    obj.userData.reveal = at;
+    return at;
+  };
+  const filled = (count, start, top) => {
+    const a = new Float32Array(count * 2);
+    for (let i = 0; i < count; i += 1) { a[i * 2] = start; a[i * 2 + 1] = top; }
+    return new BufferAttribute(a, 2);
+  };
+  const towerSpans = [];
+  const towerAt = (x, z) => towerSpans.find(([x0, x1, z0, z1]) => x >= x0 - 0.01 && x <= x1 + 0.01 && z >= z0 - 0.01 && z <= z1 + 0.01)?.[4] ?? 1;
+  const pops = [];
+  let lastMoment = 0;
+
   // Ground: the avenue, sidewalks, the park, and the museum plaza.
   flat(900, 1200, 40, -150, 0, mat.dark);
   flat(18, 1200, 0, -150, 0.01, mat.road);
@@ -69,7 +110,10 @@ export function createWorld(canvas) {
   grass.needsUpdate = true;
   flat(140, 1200, -84, -150, 0.015, face(grass));
   STREETS.forEach((s) => flat(90, 12, 54, s.z, 0.01, mat.road));
-  [-9, 9].forEach((x) => put(box(0.26, 0.16, 1200, x, 0.08, -150, mat.dark)));
+  // The curbs and the park wall are what the loader sketches, so they are already drawn when the city starts to.
+  [-9, 9].forEach((x) => { put(box(0.26, 0.16, 1200, x, 0.08, -150, mat.dark)).userData.reveal = -1; });
+
+  await pause(0.04);
 
   // Paint: lane dashes, crosswalks and stop lines, merged into one mesh.
   const marks = [];
@@ -83,7 +127,7 @@ export function createWorld(canvas) {
 
   // East side: blocks of lit apartment buildings with water towers.
   const blocks = [[230, 86], [74, 6], [-6, -74], [-86, -154], [-246, -314], [-326, -560]];
-  blocks.forEach(([z0, z1]) => {
+  for (const [z0, z1] of blocks) {
     for (let z = z0; z - z1 > 8;) {
       const w = Math.min(z - z1, 14 + rnd() * 18);
       const lowRise = z < 62 && z > 8;
@@ -109,10 +153,12 @@ export function createWorld(canvas) {
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => put(box(0.12, 2, 0.12, tx + a, h + 1, tz + b, mat.dark)));
       }
       z -= w + 0.6;
+      await pause();
     }
-  });
+  }
+  await pause(0.3);
 
-  // Behind Fifth Avenue: Madison and Park Avenue towers, merged into one mesh so they cost one draw call.
+  // Behind 26th Avenue: Madison and Park Avenue towers, merged into one mesh so they cost one draw call.
   const towerParts = [];
   const beacon = new SpriteMaterial({ map: T.poolTexture(), color: '#FF5040', transparent: true, blending: AdditiveBlending, depthWrite: false });
   for (let row = 0; row < 3; row++) {
@@ -131,6 +177,13 @@ export function createWorld(canvas) {
       }
       const x = 58 + row * 64 + rnd() * 14;
       g.translate(x + d / 2, h / 2, z - w / 2);
+      // The towers are one mesh, so each one's drawing-in moment rides on its own vertices, and its outline finds the
+      // same moment again by position.
+      mid.set(x + d / 2, h / 2, z - w / 2);
+      const at = 0.35 + farFrom(mid) * 1.1 + stagger() * 0.3;
+      towerSpans.push([x, x + d, z - w, z, at]);
+      g.setAttribute('aReveal', filled(g.attributes.position.count, at + FILL_LEAD, h));
+      lastMoment = Math.max(lastMoment, at + FILL_LEAD);
       towerParts.push(g);
       if (h > 110) {
         const light = new Sprite(beacon);
@@ -140,11 +193,13 @@ export function createWorld(canvas) {
       }
       z -= w + 5 + rnd() * 10;
     }
+    await pause();
   }
-  put(new Mesh(mergeGeometries(towerParts), face(T.towerTexture())));
+  const towers = put(new Mesh(mergeGeometries(towerParts), face(T.towerTexture())));
+  await pause(0.45);
 
   // West side: the Central Park wall and its trees.
-  put(box(0.7, 1.1, 1200, -14.7, 0.55, -150, mat.dark));
+  put(box(0.7, 1.1, 1200, -14.7, 0.55, -150, mat.dark)).userData.reveal = -1;
   const treeTextures = [1, 2, 3].map((s) => T.treeTexture(s * 17));
   for (let i = 0; i < 70; i++) {
     const h = 8 + rnd() * 7;
@@ -157,7 +212,10 @@ export function createWorld(canvas) {
     tree.scale.set(h, h, 1);
     tree.position.set(tx, h / 2 - 0.4, tz);
     city.add(tree);
+    pops.push({ sprite: tree, w: h, h });
   }
+
+  await pause(0.5);
 
   // Central Park after dark: kids playing football on a lit lawn.
   const PX = -98;
@@ -207,6 +265,8 @@ export function createWorld(canvas) {
   city.add(ball);
   const play = { from: new Vector3(PX, 0.34, PZ), to: new Vector3(PX, 0.34, PZ), t: 1, duration: 1, holder: 0 };
 
+  await pause(0.55);
+
   // Lampposts along both curbs, with halftone light on the pavement and banners on the east side.
   const banners = ['NOW OPEN', '12 STOPS', 'VISITORS', 'TONIGHT'].map((t) => new MeshBasicMaterial({ map: T.bannerTexture(t), transparent: true }));
   let lamp = 0;
@@ -234,6 +294,8 @@ export function createWorld(canvas) {
     plate.position.set(9.9, 3.35, s.z + 6.47);
     city.add(plate);
   });
+
+  await pause(0.6);
 
   // Billboards. The first spans the avenue and greets the visitor by number.
   const visitorBoard = T.dotBillboard();
@@ -273,6 +335,8 @@ export function createWorld(canvas) {
   const poster = new Mesh(new PlaneGeometry(1.1, 2.2), banners[1]);
   poster.position.set(-12.2, 1.4, -57.86);
   city.add(poster);
+
+  await pause(0.65);
 
   // The museum: four widening bands above the entrance, and the annex tower behind.
   for (let i = 0; i < 4; i++) {
@@ -315,6 +379,8 @@ export function createWorld(canvas) {
   const doorSpill = new MeshBasicMaterial({ map: T.poolTexture(), color: '#FFC98A', transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false });
   flat(2.4, 3, 16.3, -179.85, 0.065, doorSpill);
 
+  await pause(0.7);
+
   // The uptown skyline, and stars.
   const skyline = new MeshBasicMaterial({ map: T.skylineTexture(), transparent: true, fog: false, depthWrite: false });
   const north = new Mesh(new PlaneGeometry(3400, 300), skyline);
@@ -336,19 +402,32 @@ export function createWorld(canvas) {
   }
   const starGeometry = new BufferGeometry();
   starGeometry.setAttribute('position', new Float32BufferAttribute(stars, 3));
-  city.add(new Points(starGeometry, new PointsMaterial({ color: T.PAPER, size: (small ? 1.33 : 0.8) * ratio, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.7 })));
+  const starField = new Points(starGeometry, new PointsMaterial({ color: T.PAPER, size: (small ? 1.33 : 0.8) * ratio, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.7 }));
+  city.add(starField);
+  await pause(0.72);
 
   // Ink: every edge of the static city, drawn as fat lines in three jittered versions.
   const ink = new LineMaterial({ color: T.PAPER, linewidth: 1.6, worldUnits: false, transparent: true, opacity: 0.9, fog: true });
   const segments = [];
+  // When each stroke starts: its building's moment, then one stroke after another around the building.
+  const strokes = [];
   const v = new Vector3();
-  inked.forEach((mesh) => {
+  for (const mesh of inked) {
     mesh.updateMatrixWorld(true);
     const edges = new EdgesGeometry(mesh.geometry, mesh.userData.edgeAngle || 20);
     const pos = edges.attributes.position;
+    const first = segments.length;
     for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(mesh.matrixWorld); segments.push(v.x, v.y, v.z); }
+    const count = pos.count / 2;
+    const own = mesh === towers ? null : revealAt(mesh);
+    for (let k = 0; k < count; k++) {
+      const o = first + k * 6;
+      strokes.push((own ?? towerAt((segments[o] + segments[o + 3]) / 2, (segments[o + 2] + segments[o + 5]) / 2)) + (k / count) * 0.3);
+    }
     edges.dispose();
-  });
+    await pause();
+  }
+  const strokeTimes = new InstancedBufferAttribute(new Float32Array(strokes), 1);
   const boil = new Group();
   const jitter = T.seeded(77);
   for (let k = 0; k < 3; k++) {
@@ -356,16 +435,21 @@ export function createWorld(canvas) {
     for (let i = 0; i < segments.length; i++) arr[i] = segments[i] + (jitter() - 0.5) * 0.1;
     const geo = new LineSegmentsGeometry();
     geo.setPositions(arr);
+    geo.setAttribute('instanceReveal', strokeTimes);
     const lines = new LineSegments2(geo, ink);
     lines.visible = k === 0;
     boil.add(lines);
   }
   city.add(boil);
 
+  await pause(0.85);
+
   // The museum's entrance, and the rooms behind it where the walk continues inside.
   const museum = buildMuseum({ city });
 
-  // Cabs, all heading downtown (Fifth Avenue runs one way, south).
+  await pause(0.88);
+
+  // Cabs, all heading downtown (26th Avenue runs one way, south).
   const carInk = new LineMaterial({ color: T.PAPER, linewidth: 1.5, worldUnits: false, transparent: true, opacity: 0.85, fog: true });
   const glow = new SpriteMaterial({ map: T.poolTexture(), color: '#FFE6BA', transparent: true, blending: AdditiveBlending, depthWrite: false, opacity: 0.9 });
   const cars = [];
@@ -390,6 +474,8 @@ export function createWorld(canvas) {
     cars.push(car);
   }
 
+  await pause(0.92);
+
   // People on both sidewalks, two walking frames each.
   const sheet = T.walkerSheet();
   const walkers = [];
@@ -405,6 +491,88 @@ export function createWorld(canvas) {
     city.add(sprite);
     walkers.push({ sprite, map, speed: (rnd() > 0.5 ? 1 : -1) * (1.1 + rnd() * 0.6), phase: rnd(), frame: 0 });
   }
+  await pause(0.95);
+
+  // The drawing-in (reveal.js). The buildings and their ink have their moments already; last come the trees, then
+  // the lamps, and then the cabs, the kids and the people. Until it starts, the city holds at its first moment: the
+  // curbs and the park wall the loader sketched, and nothing else.
+  cars.forEach((car) => { car.userData.reveal = 1.9 + stagger() * 0.4; });
+  ball.userData.reveal = 1.9;
+  pops.forEach((p) => { p.at = 1.0 + farFrom(p.sprite.position) * 0.6 + stagger() * 0.25; });
+  kids.forEach((kid) => pops.push({ sprite: kid.sprite, w: 1.7, h: 2.55, at: 1.7 + stagger() * 0.3 }));
+  walkers.forEach((w) => { w.shows = 1.8 + stagger() * 0.5; });
+  const standIns = new Map();
+  const standIn = (m) => {
+    if (!m?.isMeshBasicMaterial) return m;
+    if (!standIns.has(m)) standIns.set(m, revealMaterial(m));
+    return standIns.get(m);
+  };
+  const swaps = [];
+  city.traverse((o) => {
+    if (!o.isMesh || o.isLineSegments2 || !o.geometry?.attributes.position) return;
+    const own = o.material;
+    const list = Array.isArray(own) ? own : [own];
+    if (!list.some((m) => m?.isMeshBasicMaterial)) return;
+    if (!o.geometry.attributes.aReveal) {
+      const at = revealAt(o);
+      extent.setFromObject(o);
+      // Lamps light after their posts are drawn, and their pools of light after that. Flat things and the skyline
+      // wash in as halftone; everything else fills upward behind its outline.
+      const washes = extent.max.y < 0.2 || list.includes(skyline);
+      const start = list.includes(mat.lamp) ? at + 0.45 : list.includes(mat.pool) || list.includes(doorSpill) ? at + 1.0 : washes ? at : at + FILL_LEAD;
+      o.geometry.setAttribute('aReveal', filled(o.geometry.attributes.position.count, start, washes ? 0 : Math.max(0.5, extent.max.y)));
+      lastMoment = Math.max(lastMoment, start);
+    }
+    swaps.push([o, own, Array.isArray(own) ? own.map(standIn) : standIn(own)]);
+  });
+  const introInk = revealLine(ink);
+  const lineFades = [[carInk, carInk.opacity, 1.9], [doorInk, doorInk.opacity, 0.8], ...museum.materials.map((m) => [m, m.opacity, 1.0])];
+  const glowOpacity = glow.opacity;
+  const starOpacity = starField.material.opacity;
+  [strokes, pops.map((p) => p.at), walkers.map((w) => w.shows), [2.3]].forEach((list) => { list.forEach((t) => { if (t > lastMoment) lastMoment = t; }); });
+  const intro = { state: 'waiting', t: 0, speed: 1, end: lastMoment + 0.65, finished: null, resolve: null };
+  // The intro at moment t. Materials and ink run off the shared clock; the sprites and the fades are set here.
+  const showIntro = (t) => {
+    REVEAL.value = t;
+    pops.forEach((p) => { const k = popIn(between(t, p.at, 0.45)); p.sprite.scale.set(p.w * k, p.h * k, 1); });
+    // Anything still at zero is left out entirely: invisible ink would still write depth and cut gaps in the strokes behind.
+    const fade = (m, full, at, span) => { const k = between(t, at, span); m.opacity = full * k; m.visible = k > 0; };
+    lineFades.forEach(([m, full, at]) => fade(m, full, at, 0.5));
+    fade(glow, glowOpacity, 1.9, 0.5);
+    fade(starField.material, starOpacity, 1.4, 0.9);
+  };
+  const useStandIns = (on) => {
+    swaps.forEach(([mesh, own, stand]) => { mesh.material = on ? stand : own; });
+    boil.children.forEach((lines) => { lines.material = on ? introInk : ink; });
+  };
+  // Done: the city's own materials go back, so from here it renders exactly as it always has.
+  const endIntro = () => {
+    if (intro.state === 'done') return;
+    intro.state = 'done';
+    REVEAL.value = 1e6;
+    useStandIns(false);
+    pops.forEach((p) => p.sprite.scale.set(p.w, p.h, 1));
+    lineFades.forEach(([m, full]) => { m.opacity = full; m.visible = true; });
+    glow.opacity = glowOpacity;
+    glow.visible = true;
+    starField.material.opacity = starOpacity;
+    starField.material.visible = true;
+    standIns.forEach((m) => m.dispose());
+    introInk.dispose();
+    intro.resolve?.();
+  };
+  useStandIns(true);
+  showIntro(0);
+  // Called each frame until it's done, after the frame's own animation has set the walkers and the beacons.
+  const introFrame = (dt) => {
+    if (intro.state === 'running') {
+      intro.t += dt * intro.speed;
+      if (intro.t >= intro.end) { endIntro(); return; }
+    }
+    showIntro(intro.t);
+    walkers.forEach((w) => { w.sprite.material.opacity *= between(intro.t, w.shows, 0.5); });
+    beacon.opacity *= between(intro.t, 1.8, 0.4);
+  };
 
   // The visitor billboard counts up to this browser's number.
   let counting = 0;
@@ -439,6 +607,8 @@ export function createWorld(canvas) {
   let boilClock = 0;
   let signClock = 0;
   let signPhase = 0;
+  // While the loader is up nobody can see the city, so it isn't drawn.
+  let held = false;
 
   function resize(w, h) {
     const nextW = Math.max(1, w);
@@ -461,6 +631,7 @@ export function createWorld(canvas) {
   }
 
   function frame(time, dt, { settle = false } = {}) {
+    if (held && !settle) return;
     const y = window.scrollY;
     const gap = y - railY;
     // The camera follows the scroll rather than tracking it exactly, so the walk keeps moving when the scroll
@@ -492,11 +663,12 @@ export function createWorld(canvas) {
     const arrive = Math.min(1, Math.max(0, (progress - 0.62) / 0.24)) * booth;
     if (aspect > 1.2) look.z += 1.25 * arrive;
     if (aspect < 0.8) {
-      // Phones: keep the city and the booth in the top half, above the text and the tour sheet.
+      // Phones: the city sits above the scroll cue, and the booth in the middle of the space between the header and
+      // the tour sheet. A steeper tilt here parks the booth right under the header with bare pavement below it.
       const early = 1 - Math.min(1, progress / 0.25);
       tmp.subVectors(pos, look).setY(0).normalize();
       pos.addScaledVector(tmp, 3.4 * arrive);
-      look.y -= 2.9 * arrive + 18 * early;
+      look.y -= 0.8 * arrive + 18 * early;
       // The visitor billboard spans the avenue, too wide for this slice of it. Turn to read it on the way past.
       const g = Math.max(0, 1 - Math.abs(progress - 0.28) / 0.13);
       look.x += 14 * g * g * (3 - 2 * g);
@@ -572,8 +744,50 @@ export function createWorld(canvas) {
         if (f !== kid.frame) { kid.frame = f; kid.map.offset.y = f ? 0 : 0.5; }
       });
     }
+    if (intro.state !== 'done') introFrame(dt);
     renderer.autoClear = true;
     renderer.render(scene, camera);
+  }
+
+  // Before the city is first seen: compile every shader it will use (the intro's, then its own) and put every texture
+  // and buffer on the GPU. It happens behind the loader, a piece at a time, instead of in the middle of the first walk.
+  async function warm({ onProgress: step } = {}) {
+    const drawing = intro.state !== 'done';
+    if (drawing) await renderer.compileAsync(scene, camera);
+    useStandIns(false);
+    await renderer.compileAsync(scene, camera);
+    useStandIns(drawing);
+    step?.(0.25);
+    const textures = new Set();
+    const renderables = [];
+    scene.traverse((o) => {
+      if (!(o.isMesh || o.isSprite || o.isPoints || o.isLine)) return;
+      renderables.push(o);
+      (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { if (m?.map) textures.add(m.map); });
+    });
+    let uploaded = 0;
+    for (const texture of textures) {
+      renderer.initTexture(texture);
+      uploaded += 1;
+      await pause();
+      step?.(0.25 + (0.55 * uploaded) / textures.size);
+    }
+    // Buffers: draw everything once, unculled, into a tiny target, a batch at a time.
+    const target = new WebGLRenderTarget(8, 8);
+    const saved = renderables.map((o) => [o.visible, o.frustumCulled]);
+    const before = renderer.getRenderTarget();
+    renderer.setRenderTarget(target);
+    for (let i = 0; i < renderables.length; i += 60) {
+      renderables.forEach((o, j) => { o.visible = j >= i && j < i + 60; o.frustumCulled = false; });
+      renderer.render(scene, camera);
+      slice = 0;
+      await pause();
+      step?.(0.8 + (0.2 * Math.min(renderables.length, i + 60)) / renderables.length);
+    }
+    renderables.forEach((o, j) => { [o.visible, o.frustumCulled] = saved[j]; });
+    renderer.setRenderTarget(before);
+    target.dispose();
+    step?.(1);
   }
 
   // Screen position of a point on the booth, for pinning HTML to it.
@@ -582,7 +796,7 @@ export function createWorld(canvas) {
     return { x: ((tmp.x + 1) / 2) * width, y: ((1 - tmp.y) / 2) * height, visible: tmp.z < 1 };
   }
 
-  // The rail starts on Fifth Avenue; scenes further in add their own keyframes.
+  // The rail starts on 26th Avenue; scenes further in add their own keyframes.
   const rail = createRail();
   rail.add(({ top, vh }) => {
     const el = document.getElementById('plaza');
@@ -631,11 +845,9 @@ export function createWorld(canvas) {
       // camera backs up before going in, which reads as the museum sliding out of frame and returning.
       { y: at(0.93), pos: [19.2, 2.15, -200], look: [31, 2.5, -200] },
       { y: at(0.97), pos: [20.8, 2.1, -200], look: [34, 2.2, -200] },
-      // Through the doors and into the vestibule. From here the frame is nothing but paper, so the welcome
-      // section can take the screen with no edge to see.
+      // Through the doors and into the vestibule, the end of the page. From here the frame is nothing but paper, and
+      // the first stop's page takes over from it (lib/entrance.js).
       { y: s0 + span, pos: [23.4, 2.05, -200], look: [34, 2, -200] },
-      // Still drifting forward while the section slides up over it: nothing stops dead at the handover.
-      { y: s0 + el.offsetHeight - vh * 0.05, pos: [27.4, 2, -200], look: [34, 1.98, -200] },
     ];
   });
   rail.measure();
@@ -650,9 +862,26 @@ export function createWorld(canvas) {
     listeners.forEach((fn) => fn(time));
   });
 
+  onProgress?.(1);
   return {
-    renderer, camera, rail,
-    anchor, showVisitor,
+    renderer, camera, rail, scene,
+    anchor, showVisitor, warm,
+    // Stop drawing while the loader covers the city, and start again when it lifts.
+    hold(on) { held = on; },
+    // The drawing-in (reveal.js). Quick is for visitors who have seen it before; skip goes straight to the finished city.
+    intro({ quick = false } = {}) {
+      if (intro.state === 'done') return Promise.resolve();
+      intro.speed = quick ? 2.2 : 1;
+      intro.state = 'running';
+      intro.finished ??= new Promise((resolve) => { intro.resolve = resolve; });
+      return intro.finished;
+    },
+    skipIntro: endIntro,
+    // Hold the drawing-in at a moment, in seconds (used when checking shots).
+    introAt(t) { if (intro.state === 'done') return; intro.state = 'waiting'; intro.t = t; frame(performance.now() / 1000, 0, { settle: true }); },
+    get drawing() { return intro.state !== 'done'; },
+    get introProgress() { return intro.state === 'done' ? 1 : intro.t / intro.end; },
+    get introTime() { return intro.t; },
     get progress() { return progress; },
     get railY() { return railY; },
     // Where a world point lands on screen, in CSS pixels, with its depth in front of the camera.

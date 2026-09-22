@@ -12,6 +12,18 @@
     var quiet = function (e) { if (e.viewTransition) { e.viewTransition.ready.catch(function () {}); e.viewTransition.finished.catch(function () {}); } };
     addEventListener('pageswap', quiet);
     addEventListener('pagereveal', quiet);
+    // Arrived through the museum doors just now: this page starts as the light through them, and the stop rises up
+    // into it once it's drawn (lib/entrance.js, main.js), so no page-to-page transition plays on top. A door left long
+    // ago (the page change was stopped, say) doesn't count, and a stop that never gets drawn shows up anyway.
+    try {
+      var doors = Number(sessionStorage.getItem('manoj-museum:through-doors'));
+      sessionStorage.removeItem('manoj-museum:through-doors');
+      if (doors && Date.now() - doors < 15000 && /^\/experience\//.test(location.pathname)) {
+        document.documentElement.dataset.arrive = 'doors';
+        addEventListener('pagereveal', function (e) { if (e.viewTransition) e.viewTransition.skipTransition(); });
+        window.__doorsTimer = setTimeout(function () { delete document.documentElement.dataset.arrive; }, 8000);
+      }
+    } catch (e) {}
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Museum of Manoj · Manoj Maheshwar Jagadeesan</title>
@@ -26,8 +38,70 @@
   <link rel="stylesheet" href="/src/styles/base.css">
   <link rel="stylesheet" href="/src/styles/scenes.css">
   <link rel="stylesheet" href="/src/styles/rooms.css">
+  <noscript><style>.loader { display: none; }</style></noscript>
 </head>
 <body data-mode="full">
+  <div class="loader" data-loader aria-hidden="true">
+    <p class="loader__note"><span>Drawing 26th Avenue</span><span data-loader-pct>0%</span></p>
+  </div>
+  <script>
+    // The loader: the night ground the city is drawn on, and how far along it is. It runs before any other script has
+    // arrived; main.js reports progress through window.__loader and says when to lift it.
+    (function () {
+      var root = document.documentElement;
+      var loader = document.querySelector('[data-loader]');
+      if (root.dataset.page === 'experience') { loader.remove(); return; }
+      history.scrollRestoration = 'manual';
+      root.classList.add('is-loading');
+      var pct = loader.querySelector('[data-loader-pct]');
+      var shown = 0;
+      var target = 0;
+      var last = performance.now();
+      var finishing = null;
+      var safety = setTimeout(function () { finish().then(hide); }, 30000);
+
+      // Scrolling waits for the city: nothing moves under the loader.
+      var block = function (e) { e.preventDefault(); e.stopImmediatePropagation(); };
+      var keys = function (e) { if ([' ', 'ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'End', 'Home'].indexOf(e.key) > -1) e.preventDefault(); };
+      addEventListener('wheel', block, { passive: false, capture: true });
+      addEventListener('touchmove', block, { passive: false, capture: true });
+      addEventListener('keydown', keys, true);
+
+      var tick = function (now) {
+        var dt = Math.min(0.1, (now - last) / 1000);
+        last = now;
+        var goal = finishing ? 1 : Math.min(target, 0.96);
+        shown += (goal - shown) * (1 - Math.exp(-dt * (finishing ? 12 : 4)));
+        pct.textContent = Math.round(shown * 100) + '%';
+        if (finishing && shown > 0.995) { finishing(); return; }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+
+      function finish() {
+        return new Promise(function (resolve) {
+          var done = false;
+          finishing = function () { if (!done) { done = true; pct.textContent = '100%'; resolve(); } };
+          // A hidden tab never paints, so don't wait on it.
+          setTimeout(finishing, 900);
+        });
+      }
+      function hide() {
+        clearTimeout(safety);
+        removeEventListener('wheel', block, { capture: true });
+        removeEventListener('touchmove', block, { capture: true });
+        removeEventListener('keydown', keys, true);
+        root.classList.remove('is-loading');
+        loader.classList.add('is-done');
+        setTimeout(function () { loader.remove(); }, 700);
+      }
+      window.__loader = {
+        set: function (p) { target = Math.max(target, Math.min(0.96, p)); },
+        finish: finish,
+        hide: hide,
+      };
+    })();
+  </script>
   <svg id="fx-defs" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <defs>
       <!-- Line boil: the turbulence seed changes a few times a second so drawn lines breathe -->
@@ -57,7 +131,7 @@
   <div class="progress-rail" aria-hidden="true"><i></i></div>
 
   <header class="hud">
-    <a class="hud__brand" href="/" data-go="#plaza" aria-label="Museum of Manoj, back to Fifth Avenue"><span class="logo" aria-hidden="true"><span>MUSEUM</span><span class="logo__of">of</span><span>MANOJ</span></span></a>
+    <a class="hud__brand" href="/" data-go="#plaza" aria-label="Museum of Manoj, back to 26th Avenue"><span class="logo" aria-hidden="true"><span>MUSEUM</span><span class="logo__of">of</span><span>MANOJ</span></span></a>
     <span class="hud__visitor mono">visitor <span data-visitor>#--,---</span></span>
     <span class="hud__where mono" data-where hidden></span>
     <button class="hud__menu mono" type="button" aria-controls="directory" aria-expanded="false">Directory</button>
@@ -76,10 +150,9 @@
   <aside class="dock-ticket" aria-label="Your ticket" data-dock-ticket></aside>
 
   <main id="tour">
-    <section class="scene scene--arrival" id="plaza" aria-label="Fifth Avenue and the ticket booth"></section>
+    <section class="scene scene--arrival" id="plaza" aria-label="26th Avenue and the ticket booth"></section>
     <section class="scene scene--walk" id="walk" aria-hidden="true"></section>
     <section class="scene scene--steps" id="steps" aria-label="Meet your guide"></section>
-    <section class="scene scene--lobby" id="lobby" aria-label="The lobby"></section>
     <div id="rooms"></div>
   </main>
 

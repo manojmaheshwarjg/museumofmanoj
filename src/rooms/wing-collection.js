@@ -138,7 +138,6 @@ export const WINGS = {
         <p class="mono gallery__hint">Swipe through the exhibits</p>
         <ol class="gallery__exhibits">${room.exhibits.map(exhibitHTML).join('')}</ol>
         ${clientsHTML(room.clients)}
-        ${room.tell?.length ? `<ul class="beat__tell">${room.tell.map((t) => `<li class="tellme">Tell me: ${t}</li>`).join('')}</ul>` : ''}
       </div>`,
 
     init: (el, room, { kit, quiet }) => {
@@ -174,5 +173,5 @@ export const WINGS = {
   },
 };
 
-// The exhibit drawings, shared through the registry (framed on the 3D walls and in the Easter eggs).
+// The exhibit drawings, shared through the registry.
 export { DRAW as ART };

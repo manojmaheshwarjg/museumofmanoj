@@ -6,6 +6,7 @@ import { loadFonts } from './textures.js';
 import { createWorld } from './world.js';
 
 let pending = null;
+const watchers = new Set();
 
 function hasWebGL() {
   try {
@@ -16,7 +17,9 @@ function hasWebGL() {
   }
 }
 
-export function ensureWorld() {
+// Callers can follow the build as it goes (the loader does, to draw its progress), or just wait for it.
+export function ensureWorld(onProgress) {
+  if (onProgress) watchers.add(onProgress);
   if (!pending) {
     pending = (async () => {
       // ?flat previews the site without the 3D world, the way it looks without WebGL2 or with reduced motion.
@@ -26,8 +29,10 @@ export function ensureWorld() {
       canvas.setAttribute('aria-hidden', 'true');
       document.body.prepend(canvas);
       await loadFonts();
-      const world = createWorld(canvas);
+      const world = await createWorld(canvas, { onProgress: (done) => watchers.forEach((fn) => fn(done)) });
       document.documentElement.classList.add('has-world');
+      // For checking shots against a production build (?shots), where the modules can't be imported by path.
+      if (import.meta.env.DEV || new URLSearchParams(location.search).has('shots')) window.__world = world;
       return world;
     })();
   }

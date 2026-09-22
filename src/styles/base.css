@@ -9,6 +9,7 @@
   --paper: #F1EDE3;
   --paper-2: #E4DFD2;
   --paper-3: #D6D0C1;
+  --print: #FAF7F0; /* photo paper: a shade brighter than the page, so a print reads as a print */
   --muted: #8A867C;
   --muted-2: #B9B4A8;
   --line: #2C2A25;
@@ -143,6 +144,32 @@ a { color: inherit; }
 .directory__board a:hover { background: var(--paper); color: var(--ink); }
 .directory__board a .mono { font-family: var(--f-mono); font-weight: 400; font-size: 11px; opacity: .7; }
 
+/* The resume viewer (lib/resume.js): the PDF on a sheet over the page, scrolling on its own. Its links stay links. */
+html.has-viewer { overflow: hidden; }
+.resume-viewer {
+  position: fixed; z-index: 92; inset: 0; display: grid; grid-template-rows: auto minmax(0, 1fr);
+  background: rgba(7, 7, 6, .86); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  opacity: 0; visibility: hidden; transition: opacity .3s var(--ease), visibility 0s linear .3s;
+}
+.resume-viewer.is-open { opacity: 1; visibility: visible; transition: opacity .3s var(--ease); }
+.resume-viewer__bar {
+  display: flex; align-items: center; gap: 8px; width: min(100% - 2 * var(--pad), 860px); margin-inline: auto;
+  padding: max(16px, env(safe-area-inset-top)) 0 14px; color: var(--paper);
+}
+.resume-viewer__title { margin: 0 auto 0 0; opacity: .8; }
+.resume-viewer__action { padding: 8px 14px; border: 1.5px solid var(--paper); border-radius: 999px; background: none; color: var(--paper); text-decoration: none; cursor: pointer; }
+.resume-viewer__action:hover, .resume-viewer__action:focus-visible { background: var(--paper); color: var(--ink); }
+.resume-viewer__scroll { overflow: auto; overscroll-behavior: contain; padding: 0 var(--pad) max(40px, env(safe-area-inset-bottom)); }
+.resume-viewer__pages { display: grid; gap: 18px; width: min(100%, 860px); margin-inline: auto; }
+.resume-viewer__page { position: relative; background: #fff; box-shadow: 6px 8px 0 rgba(0, 0, 0, .4); translate: 0 18px; transition: translate .45s var(--ease-out); }
+.resume-viewer.is-open .resume-viewer__page { translate: 0 0; }
+.resume-viewer__page canvas { display: block; width: 100%; height: 100%; }
+.resume-viewer__link { position: absolute; border-radius: 2px; }
+.resume-viewer__link:hover { background: rgba(14, 13, 11, .08); }
+.resume-viewer__link:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.resume-viewer__status { margin: 0; padding: 30vh 0; text-align: center; color: var(--muted-2); }
+.resume-viewer__status a { color: var(--paper); }
+
 /* The ticket, docked once printed */
 .dock-ticket {
   position: fixed; z-index: 79; right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom));
@@ -178,6 +205,20 @@ a { color: inherit; }
 .punch-toast .mono { font-size: 10px; opacity: .8; }
 @media (max-width: 719px) { .punch-toast { right: 8px; bottom: calc(max(8px, env(safe-area-inset-bottom)) + 62px); } }
 
+/* The loader (index.html): the 3D canvas's own ground, dot for dot, and how far along the city is. When it lifts, the
+   only thing that changes is the city starting to draw itself in. */
+.loader {
+  position: fixed; inset: 0; z-index: 95; touch-action: none;
+  background-color: var(--night); background-image: radial-gradient(rgba(241, 237, 227, .09) 1px, transparent 1.3px); background-size: 18px 18px;
+  transition: opacity .5s var(--ease), visibility 0s linear .5s;
+}
+.loader.is-done { opacity: 0; visibility: hidden; }
+.loader__note {
+  position: absolute; left: var(--pad); bottom: max(30px, env(safe-area-inset-bottom)); margin: 0; display: flex; gap: 14px;
+  font: 500 11px/1 ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2);
+}
+.loader__note span:last-child { color: var(--paper); font-variant-numeric: tabular-nums; }
+
 /* The 3D world sits behind the whole tour; every scene scrolls over it */
 .world { position: fixed; inset: 0; z-index: 0; display: block; width: 100%; height: 100vh; height: 100lvh; pointer-events: none; background-color: var(--night); background-image: radial-gradient(rgba(241, 237, 227, .09) 1px, transparent 1.3px); background-size: 18px 18px; }
 #tour { position: relative; z-index: 1; }
@@ -188,24 +229,41 @@ a { color: inherit; }
 .layer { position: absolute; inset: 0; }
 .wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--pad); }
 
-/* Photos: a halftone placeholder names the expected file until the photo exists */
-.photo { position: relative; margin: 0; background: var(--paper); padding: 8px 8px 0; box-shadow: 3px 3px 0 rgba(14, 13, 11, .45); }
-.photo__img { position: relative; aspect-ratio: var(--ar, 4 / 5); overflow: hidden; background: var(--ink-3); }
-.photo__img img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.08); transition: filter .7s var(--ease); }
-.photo:hover .photo__img img, .photo.is-color .photo__img img { filter: none; }
-.photo__img.is-empty { background-color: var(--ink-3); background-image: radial-gradient(circle, rgba(241, 237, 227, .24) 36%, transparent 40%); background-size: 7px 7px; }
-.photo__img.is-empty::after {
-  content: attr(data-file); position: absolute; left: 8px; right: 8px; bottom: 8px;
-  font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .04em; color: var(--paper); background: var(--ink); padding: 4px 6px; line-height: 1.3; word-break: break-all;
+/* Photos (lib/doodle.js): a print, the shape of its picture, in colour with a film look: a warm grade with the blacks
+   lifted a touch, a fine grain, and a soft sheen across the print. A dark photo is brought up into the same light as
+   the rest, and a bright one gets less of the haze (its --exposure and --haze, measured as it loads). Hover (or tap)
+   takes the film look off. A photo whose file won't
+   load is left out. */
+.photo { position: relative; margin: 0; background: var(--print); padding: 7px; box-shadow: 4px 4px 0 rgba(14, 13, 11, .4); }
+.room--night .photo { box-shadow: 4px 4px 0 rgba(241, 237, 227, .14); }
+.photo.is-missing { display: none; }
+.photo__img { position: relative; aspect-ratio: var(--ar, 4 / 3); overflow: hidden; background: var(--ink-3); }
+.photo__img img {
+  display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0;
+  filter: brightness(var(--exposure, 1)) contrast(.94) brightness(1.03) saturate(.9) sepia(.12);
+  transition: opacity .7s var(--ease), filter .6s var(--ease);
 }
-.photo figcaption { font-family: var(--f-hand); font-size: 21px; color: var(--ink); padding: 6px 2px 9px; line-height: 1.05; }
-
-/* A marked gap in the story, waiting for Manoj's real detail */
-.tellme {
-  display: inline-block; font-family: var(--f-hand); font-size: 20px; line-height: 1.1; color: var(--ink);
-  background: repeating-linear-gradient(-45deg, var(--paper), var(--paper) 6px, var(--paper-2) 6px, var(--paper-2) 12px);
-  border: 1.5px dashed var(--ink); padding: 4px 10px; border-radius: 4px; rotate: -1deg;
+.photo__img:not(.is-empty) img { opacity: 1; }
+.photo__img::before, .photo__img::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; transition: opacity .6s var(--ease); }
+.photo__img::before { opacity: var(--haze, 1); mix-blend-mode: screen; background: linear-gradient(120deg, rgba(255, 246, 226, .2), rgba(255, 246, 226, 0) 42%), rgba(70, 48, 26, .3); }
+.photo__img::after {
+  opacity: .26; mix-blend-mode: overlay; background-size: 190px 190px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='190' height='190'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
 }
+.photo:hover .photo__img img, .photo.is-plain .photo__img img { filter: brightness(var(--exposure, 1)); }
+.photo:hover .photo__img::before, .photo:hover .photo__img::after, .photo.is-plain .photo__img::before, .photo.is-plain .photo__img::after { opacity: 0; }
+/* A marked photo (lib/doodle.js): once it's well in view, everyone else fades to black and white, and ink circles and a
+   note draw in around the faces that matter, which keep their colour. Hover (or tap) clears it all away, back to the
+   plain photo. */
+.photo__spot { position: absolute; inset: 0; }
+.photo__marks { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; filter: drop-shadow(0 0 2px rgba(250, 247, 240, .9)); transition: opacity .4s var(--ease); }
+.photo__marks path { fill: none; stroke: var(--ink); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .5s cubic-bezier(.5, 0, .3, 1) var(--d, 0s); }
+.photo__note { font-family: var(--f-hand); font-size: 56px; font-weight: 700; fill: var(--ink); opacity: 0; translate: 0 8px; transition: opacity .5s var(--ease) var(--d, 0s), translate .5s var(--ease) var(--d, 0s); }
+.photo.is-marked .photo__marks path { stroke-dashoffset: 0; }
+.photo.is-marked .photo__note { opacity: 1; translate: 0 0; }
+.photo.is-marked .photo__img img:not(.photo__spot) { filter: brightness(var(--exposure, 1)) contrast(.94) brightness(1.03) saturate(0) sepia(.12); }
+.photo.is-marked:hover .photo__img img, .photo.is-marked.is-plain .photo__img img { filter: brightness(var(--exposure, 1)); }
+.photo.is-marked:hover .photo__marks, .photo.is-marked.is-plain .photo__marks { opacity: 0; }
 
 .noscript { padding: 40px var(--pad); color: var(--paper); }
 
@@ -238,6 +296,13 @@ html[data-page="experience"] .hud__where:not([hidden]) { display: inline; }
 @keyframes stop-enter-right { from { transform: translateX(100%); } }
 @keyframes stop-leave-right { to { transform: translateX(28%); filter: brightness(.9); } }
 @keyframes stop-enter-left { from { transform: translateX(-100%); } }
+/* Through the doors (lib/entrance.js): the light fills the screen, and the page on the other side starts as that light,
+   with the stop rising up into it from the bottom (main.js), the way the welcome used to scroll up when it was part of
+   the street. */
+.doorlight { position: fixed; inset: 0; z-index: 78; background: var(--paper); pointer-events: none; animation: doorlight .28s var(--ease) both; }
+@keyframes doorlight { from { opacity: 0; } }
+html[data-arrive="doors"] body { background-color: var(--paper); }
+html[data-arrive="doors"] #rooms { transform: translateY(100lvh); box-shadow: 0 -1px 0 rgba(14, 13, 11, .18); }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }

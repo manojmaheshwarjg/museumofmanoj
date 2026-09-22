@@ -19,10 +19,6 @@
 .room__kicker { display: flex; justify-content: space-between; gap: 10px; margin: 0; opacity: .72; }
 .room__title { font-size: clamp(34px, 4.4vw, 62px); }
 .room__meta { margin: 0; opacity: .75; }
-.room__4d { display: flex; align-items: baseline; gap: 10px; margin: 0; font-size: 15px; line-height: 1.45; text-wrap: pretty; }
-.room__4d .mono { flex: none; padding: 2px 6px 1px; border-radius: 4px; }
-.room--paper .room__4d .mono { background: var(--ink); color: var(--paper); }
-.room--night .room__4d .mono { background: var(--paper); color: var(--ink); }
 .room__proof { list-style: none; display: grid; gap: 6px; margin: 2px 0 0; padding: 12px 0 0; border-top: 1.5px dashed currentColor; font-size: 14px; line-height: 1.35; }
 .room__proof li { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 10px; }
 .room__proof li::before { content: ""; width: 8px; height: 8px; margin-top: 5px; border: 1.5px solid currentColor; border-radius: 50%; }
@@ -48,15 +44,40 @@
 .beat__stat { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; margin: 2px 0 0; }
 .beat__num { font-size: clamp(50px, 7vw, 96px); font-weight: 900; line-height: .9; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .beat__stat .mono { opacity: .75; }
-.beat__photo { width: min(270px, 76%); margin-top: 6px; rotate: 1.5deg; }
-.beat:nth-child(even) .beat__photo { rotate: -1.5deg; }
-.beat__tell { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; padding: 0; }
-@media (min-width: 1200px) {
-  .beat__copy { grid-template-columns: minmax(0, 1fr) 210px; column-gap: 32px; }
-  .beat__copy > * { grid-column: 1; }
-  .beat__copy > .beat__photo { grid-column: 2; grid-row: 1 / span 6; width: 100%; margin-top: 4px; }
+/* A beat's photos: a row as wide as the beat, so as big as its drawing. One photo fills it (but is never taller than the
+   screen); two or three sit side by side at one height; four make a grid. Each flex basis is the frame's padding, so
+   the widths share out by aspect ratio and the pictures themselves come out exactly the same height. */
+.photos { display: flex; gap: clamp(12px, 1.6vw, 20px); align-items: flex-start; }
+.photos > .photo { flex: var(--ar) 1 14px; min-width: 0; }
+.photos > .photo:nth-child(odd) { rotate: -.5deg; }
+.photos > .photo:nth-child(even) { rotate: .6deg; }
+.photos--1 { justify-content: center; }
+.photos--1 > .photo { flex: none; width: min(100%, calc(var(--ar) * min(78svh, 700px) + 14px)); rotate: .5deg; }
+.beat:nth-child(even) .photos--1 > .photo { rotate: -.5deg; }
+.photos--4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 719px) {
+  .photos--1 > .photo, .photos--3 > .photo { flex: none; width: min(100%, calc(var(--ar) * min(58svh, 460px) + 14px)); }
+  .photos--3 { flex-direction: column; align-items: center; }
+  .photos--4 { gap: 10px; }
 }
-body[data-mode="express"] .beat[data-full] { display: none; }
+
+/* The cover: one photo at the top of a stop, taped to the page */
+.room__cover { display: flex; justify-content: center; margin-block: 0 clamp(36px, 5vw, 64px); }
+.room__print { position: relative; width: min(100%, 560px); }
+.room__cover .photo { rotate: -2.2deg; }
+.room__cover .photo::before { content: ""; position: absolute; z-index: 2; left: 50%; top: -13px; width: 112px; height: 26px; translate: -50% 0; rotate: 3deg; background: rgba(232, 216, 170, .72); box-shadow: 0 1px 2px rgba(14, 13, 11, .12); }
+@media (max-width: 719px) { .room__print { width: min(100%, 360px); } }
+/* The cover's note: under its bottom corner on a narrow screen, with the arrow up into the photo, and out in the margin
+   beside it when there's room, the arrow reaching back across. */
+.cover-note { position: absolute; z-index: 3; right: 2px; top: calc(100% + 6px); display: flex; align-items: flex-start; margin: 0; rotate: -4deg; transform-origin: 0 50%; pointer-events: none; }
+.cover-note .hand { font-size: clamp(25px, 2.3vw, 32px); font-weight: 700; white-space: nowrap; }
+.cover-note__arrow { flex: none; width: 60px; height: 42px; margin: -26px 2px 0 0; scale: 1 -1; overflow: visible; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.cover-note__arrow path { stroke-dasharray: 1; }
+@media (max-width: 719px) { .room__cover:has(.cover-note) { margin-bottom: 64px; } }
+@media (min-width: 1100px) {
+  .cover-note { right: auto; top: 13%; left: calc(100% - 26px); }
+  .cover-note__arrow { width: 90px; height: 63px; margin: 20px 4px 0 0; scale: 1 1; }
+}
 
 /* The way on: a clear button to the next stop, and a quieter way back to the one before */
 .room__nav { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 18px 32px; margin-top: clamp(72px, 10vw, 128px); padding-block: 28px clamp(44px, 7vw, 80px); border-top: 2px solid currentColor; }
@@ -79,20 +100,6 @@ body[data-mode="express"] .beat[data-full] { display: none; }
 .room__ambient { position: sticky; z-index: 2; top: 0; height: 100svh; margin-bottom: -100svh; pointer-events: none; }
 .room__ambient canvas { width: 100%; height: 100%; }
 
-/* The theater: one full-screen scene at a time */
-.room--theater .room__inner { grid-template-columns: minmax(0, 1fr); }
-.room--theater .room__plaque { position: static; }
-@media (min-width: 1000px) { .room--theater .room__plaque { grid-template-columns: minmax(0, 620px) auto; align-items: end; justify-content: space-between; } }
-.room--theater .room__beats { gap: 0; }
-.room--theater .beat { min-height: 100svh; align-content: center; justify-items: center; padding-block: 6svh; text-align: center; }
-.room--theater .beat__stage { width: min(100%, 820px); }
-.room--theater .beat__copy { justify-items: center; max-width: 44em; }
-.room--theater .beat__stat, .room--theater .beat__tell { justify-content: center; }
-.room--theater .beat__copy > .beat__photo { grid-column: 1; grid-row: auto; width: min(250px, 70%); }
-@media (min-width: 1200px) { .room--theater .beat__copy { grid-template-columns: minmax(0, 1fr); } }
-.room--theater .beat--slow { min-height: 190svh; align-content: start; }
-.beat__hold { position: sticky; top: calc(var(--hud) + 2svh); display: grid; justify-items: center; gap: 18px; width: 100%; }
-.room--theater .beat--slow .beat__stage { width: min(100%, 540px); }
 
 /* Effect layers: paper confetti and the frost on landing */
 .beat__fx i { position: absolute; left: 50%; top: 34%; width: 9px; height: 13px; border: 1.5px solid currentColor; background-color: var(--paper); }
@@ -173,9 +180,12 @@ body[data-mode="express"] .beat[data-full] { display: none; }
 .alcove__photo { width: min(240px, 70%); rotate: -2deg; }
 .tank__art, .bar__art, .wip__art, .friends__art, .px__art { display: block; width: 100%; height: auto; }
 .tank { cursor: pointer; }
-.salon { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
-.salon .photo:first-child { grid-column: span 2; grid-row: span 2; }
-@media (max-width: 719px) { .salon { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* The photo exhibition: rows of prints, each row filling the width with its pictures at one height (see .photos). On a
+   phone a row breaks up, a landscape to a line. */
+.salon { display: grid; gap: 12px; }
+.salon__row { display: flex; flex-wrap: wrap; gap: 12px; }
+.salon__row > .photo { flex: var(--ar) 1 14px; min-width: 0; }
+@media (max-width: 719px) { .salon, .salon__row { gap: 8px; } .salon__row > .photo { flex-basis: calc(var(--ar) * 104px + 14px); } }
 
 .px { position: relative; overflow: hidden; border-radius: 10px; cursor: none; touch-action: pan-y; }
 .px__lens {
@@ -273,54 +283,3 @@ body[data-mode="express"] .beat[data-full] { display: none; }
 .receipt__rows dd { margin: 0; font-weight: 500; text-align: right; }
 .receipt__bar { height: 34px; margin: 4px 0 0; background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 7px, transparent 7px 9px); }
 .receipt__again { justify-self: center; margin-top: 4px; }
-
-/* The comic strip: how the room happened, in panels above the room itself */
-.room__strip { list-style: none; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 14px; margin-block: 0 clamp(40px, 6vw, 72px); padding-block: 0; }
-.strip__panel { display: grid; align-content: start; gap: 9px; padding: 0 13px 13px; border: 2.5px solid currentColor; border-radius: 4px; }
-.room--paper .strip__panel { background-color: var(--paper); box-shadow: 5px 5px 0 rgba(14, 13, 11, .14); }
-.room--night .strip__panel { background-color: var(--night); box-shadow: 5px 5px 0 rgba(241, 237, 227, .12); }
-.strip__panel--tell { border-style: dashed; }
-.strip__cap { justify-self: start; margin: 0 0 0 -13px; padding: 5px 10px 4px; font-size: 11px; letter-spacing: .08em; }
-.room--paper .strip__cap { background: var(--ink); color: var(--paper); }
-.room--night .strip__cap { background: var(--paper); color: var(--ink); }
-.strip__art { display: block; width: 100%; height: auto; }
-.strip__line { margin: 0; font-family: var(--f-hand); font-size: clamp(19px, 1.9vw, 23px); line-height: 1.1; }
-@media (max-width: 719px) {
-  .room__strip { grid-auto-flow: column; grid-auto-columns: 76%; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
-  .room__strip::-webkit-scrollbar { display: none; }
-  .strip__panel { scroll-snap-align: center; }
-}
-
-/* Easter eggs: markers on the 3D walls, the card that opens, and the list in rooms without 3D (world/eggs.js) */
-.egg-layer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
-.egg-dot { position: absolute; left: 0; top: 0; width: 42px; height: 42px; margin: -22px 0 0 -22px; display: grid; place-items: center; border-radius: 50%; border: 2.5px solid var(--ink); background: var(--paper); color: var(--ink); font: 800 22px/1 "Bricolage Grotesque", sans-serif; cursor: pointer; opacity: 0; scale: .6; pointer-events: none; box-shadow: 3px 3px 0 rgba(14, 13, 11, .35); transition: opacity .25s, scale .25s var(--ease); }
-.egg-dot::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid currentColor; animation: egg-ping 3s ease-out infinite; }
-.egg-dot.is-on { opacity: 1; scale: 1; pointer-events: auto; }
-.egg-dot.is-found { background: var(--ink); color: var(--paper); border-color: var(--paper); }
-.egg-dot.is-found::after { animation: none; opacity: 0; }
-.egg-dot:focus-visible { outline: 3px solid var(--paper); outline-offset: 4px; }
-@keyframes egg-ping { 0% { transform: scale(.8); opacity: .5; } 100% { transform: scale(1.3); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .egg-dot::after { animation: none; } }
-
-.egg-card { position: fixed; z-index: 90; right: 20px; bottom: 20px; width: min(420px, calc(100vw - 32px)); max-height: calc(100svh - var(--hud) - 36px); overflow: auto; display: grid; gap: 10px; padding: 16px 18px 20px; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: 14px; box-shadow: 8px 8px 0 rgba(14, 13, 11, .4); }
-.egg-card__close { justify-self: end; padding: 6px 12px; border: 1.5px solid var(--ink); border-radius: 999px; background: none; color: var(--ink); cursor: pointer; }
-.egg-card__kicker { margin: -34px 0 0; color: #6F6B62; }
-.egg-card__title { margin: 0; font: 800 28px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -.02em; }
-.egg-card__art { display: block; width: 100%; height: auto; border: 2px solid var(--ink); border-radius: 8px; background: var(--paper); }
-.egg-card__sign { margin: 0; padding: 26px 12px; text-align: center; font-size: 42px; border: 2px dashed var(--ink); border-radius: 8px; }
-.egg-card__line { margin: 0; font-size: 16px; line-height: 1.4; }
-.egg-card__note { margin: 0; font-size: 26px; line-height: 1.05; }
-.egg-card__countdown { font-size: 44px; text-align: center; }
-.egg-card__clocks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.egg-card__clocks li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 6px; border-bottom: 1.5px dotted #6F6B62; }
-.egg-card__clocks b { font-size: 22px; }
-.egg-card__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.egg-card__actions:empty, .egg-card__play:empty { display: none; }
-.egg-card__sfx { position: absolute; right: 96px; top: 12px; font: 700 34px/1 Caveat, cursive; opacity: 0; pointer-events: none; }
-@media (max-width: 719px) { .egg-card { left: 12px; right: 12px; bottom: 12px; width: auto; } }
-
-.room__eggs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.room__eggs > .mono { width: 100%; opacity: .72; }
-.room__egg { padding: 8px 12px; border: 2px dashed currentColor; border-radius: 999px; background: none; color: inherit; font: inherit; font-size: 14px; cursor: pointer; }
-.room__egg.is-found { border-style: solid; }
-

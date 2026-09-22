@@ -1,11 +1,13 @@
 // 01 · Meet your guide. Doodle Manoj waits at the bottom of the museum steps and holds out his hand.
-// Press and hold (or just scroll) to climb together. At the top, the doors open onto the lobby.
+// Press and hold (or just scroll) to climb together. At the top he holds the doors, your ticket gets its first punch,
+// and through them the tour goes on at the first stop (lib/entrance.js).
 
 import gsap from 'gsap';
 import { sketcher, el, PAPER, reducedMotion } from '../lib/doodle.js';
 import { mountManoj } from '../character/manoj.js';
-import { state, formatVisitor } from '../lib/state.js';
-import { scrollToProgress, scrollToTarget } from '../lib/scroll.js';
+import { state, formatVisitor, punch } from '../lib/state.js';
+import { goInside } from '../lib/entrance.js';
+import { scrollToProgress } from '../lib/scroll.js';
 import { ensureWorld } from '../world/stage.js';
 import { ensureGuide, GUIDE_INTRO } from '../world/guide.js';
 import { visitorArm } from '../character/arm.js';
@@ -110,7 +112,7 @@ export async function init() {
         </button>
         <div class="steps__hint">
           <span class="hand">Press and hold to walk up</span>
-          <span class="mono">or just scroll · <a href="#lobby" data-go="#lobby">skip to the lobby</a></span>
+          <span class="mono">or just scroll · <a href="/experience/chennai" data-inside>skip inside</a></span>
         </div>
       </div>
     </div>`;
@@ -127,12 +129,13 @@ export async function init() {
   const ui = root.querySelector('.steps__ui');
   const holdBtn = root.querySelector('[data-hold]');
   const ring = root.querySelector('.steps__ring');
+  root.querySelector('[data-inside]')?.addEventListener('click', (e) => { e.preventDefault(); goInside(); });
 
   if (reducedMotion()) {
     root.classList.add('is-static');
     guide.pose('offer');
     bubble.textContent = BEATS[1].line;
-    holdBtn.addEventListener('click', () => scrollToTarget('#lobby'));
+    holdBtn.addEventListener('click', goInside);
     return;
   }
 
@@ -162,10 +165,14 @@ export async function init() {
   let idle = 0;
   const tl = gsap.timeline({
     defaults: { ease: 'none' },
+    // Once the doors have fully opened on screen (the timeline trails the scroll a little), on inside.
+    onUpdate: () => { if (tl.progress() > 0.995 && state.ticketPrinted) goInside(); },
     scrollTrigger: {
       trigger: root, start: 'top top', end: 'bottom bottom', scrub: 0.5,
       onUpdate: (self) => {
         setBeat(self.progress);
+        // "After you." Manoj holds the door, and your ticket gets its first punch: 01, the entrance.
+        if (self.progress > 0.84 && state.ticketPrinted) punch(1);
         ring.style.strokeDashoffset = String(100 - self.progress * 100);
         if (guide && self.progress > 0.1 && self.progress < 0.84) {
           walk(true);
@@ -216,7 +223,7 @@ export async function init() {
     last = t;
     p = Math.min(1, p + dt / HOLD_SECONDS);
     scrollToProgress(root, p);
-    if (p >= 1) { stop(); scrollToTarget('#lobby', { duration: 1.1 }); return; }
+    if (p >= 1) { stop(); return; }
     raf = requestAnimationFrame(climb);
   };
   const start = (e) => {

@@ -1,5 +1,4 @@
-// Every illustration, 4D effect and custom room layout, collected once so any part of the museum can draw them:
-// the rooms themselves, the framed pictures on the 3D walls, the comic strips and the Easter eggs.
+// Every illustration, 4D effect and custom room layout, collected once for the rooms to draw from.
 
 const collect = (mods, name) => Object.values(mods).reduce((all, mod) => ({ ...all, ...(mod[name] || {}) }), {});
 const arts = import.meta.glob('./art-*.js', { eager: true });

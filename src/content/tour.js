@@ -2,8 +2,8 @@
 
 export const STOPS = [
   { id: 'plaza', no: '00', title: 'The plaza', time: '1 min' },
-  { id: 'lobby', no: '01', title: 'The lobby', time: '30 s' },
-  { id: 'room-02', no: '02', title: 'Chennai, where it began', time: '75 s' },
+  { id: 'steps', no: '01', title: 'Meet your guide', time: '30 s' },
+  { id: 'room-02', no: '02', title: 'Chennai is where the story starts', time: '75 s' },
   { id: 'room-03', no: '03', title: 'Teknuance, the first job', time: '75 s' },
   { id: 'room-04', no: '04', title: 'Three friends, one studio', time: '90 s' },
   { id: 'room-05', no: '05', title: 'Flight to Delhi', time: '90 s' },

@@ -1,4 +1,4 @@
-// Where each stop of the tour lives. The home page is the walk in, from Fifth Avenue to the welcome, and every other
+// Where each stop of the tour lives. The home page is the walk in, from 26th Avenue to the welcome, and every other
 // stop is its own page at /experience/<slug>, so it can be linked to, shared, and read on its own.
 // Kept free of the DOM, because the build reads it too, to write each page's link preview.
 
@@ -18,7 +18,7 @@ const SLUGS = {
   'room-12': 'whats-next',
 };
 
-// Where a stop lives. Stops that are part of the walk (the plaza, the lobby) keep their place on the home page.
+// Where a stop lives. Stops that are part of the walk (the plaza, the steps) keep their place on the home page.
 export const pathFor = (id) => (SLUGS[id] ? `/experience/${SLUGS[id]}` : `/#${id}`);
 
 // The stop a page belongs to, or null for the home page and for addresses that match no stop.

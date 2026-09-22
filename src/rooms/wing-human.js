@@ -6,20 +6,18 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { photo } from '../lib/doodle.js';
 
 const NANO_KEY = 'manoj-museum:nano';
-export const readFed = () => { try { return Number(localStorage.getItem(NANO_KEY)) || 0; } catch { return 0; } };
-export const saveFed = (n) => { try { localStorage.setItem(NANO_KEY, String(n)); } catch { /* private mode: count stays in memory */ } };
+const readFed = () => { try { return Number(localStorage.getItem(NANO_KEY)) || 0; } catch { return 0; } };
+const saveFed = (n) => { try { localStorage.setItem(NANO_KEY, String(n)); } catch { /* private mode: count stays in memory */ } };
 let clipCount = 0;
-
-const tells = (item) => (item.tell?.length ? `<ul class="beat__tell">${item.tell.map((t) => `<li class="tellme">Tell me: ${t}</li>`).join('')}</ul>` : '');
 
 const INNER = {
   photos: (item) => `
     <p class="dotf alcove__tag">NIKON D3300 · 35MM F/1.8</p>
-    <div class="salon">${item.photos.map((file, i) => photo({ file, ar: i === 0 ? '4 / 5' : '1 / 1', alt: 'A photograph by Manoj' })).join('')}</div>`,
+    <div class="salon">${item.photos.map((row) => `<div class="salon__row">${row.map((entry) => photo(entry)).join('')}</div>`).join('')}</div>`,
   nano: (item) => `
     <div class="tank" data-tank><svg class="tank__art" viewBox="0 0 600 340" role="img" aria-label="Nano the betta fish swimming in an aquarium"></svg></div>
     <div class="alcove__row"><button class="btn" type="button" data-feed>Feed Nano</button><span class="mono" data-fed></span></div>
-    ${item.photo ? `<div class="alcove__photo">${photo(item.photo)}</div>` : ''}`,
+    ${item.photo && photo(item.photo) ? `<div class="alcove__photo">${photo(item.photo)}</div>` : ''}`,
   coffee: () => `
     <svg class="bar__art" viewBox="0 0 600 290" role="img" aria-label="A coffee bar with a pour-over and four cups"></svg>
     <div class="alcove__row"><button class="btn" type="button" data-pour>Pour a cup</button><span class="hand alcove__status" data-cups>No coffee yet. No code yet.</span></div>`,
@@ -142,7 +140,6 @@ export const WINGS = {
               <p class="alcove__text">${item.text}</p>
             </header>
             ${INNER[item.kind](item)}
-            ${tells(item)}
           </article>`).join('')}
       </div>`,
 

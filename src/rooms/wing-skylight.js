@@ -1,4 +1,4 @@
-// Room 12 · Skylight: what's next. The top of the spiral opens onto a New York dawn.
+// Room 12 · Skylight: what's next. A skylight opens onto a New York dawn.
 // A gallery boarded up for your team with the 90-day plan pasted on the hoarding, the availability
 // plaque, a guestbook, the gift shop, and the street outside where the billboard says goodbye.
 
@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { manojSVG, mountManoj } from '../character/manoj.js';
 import { state, on, formatVisitor, ROOM_COUNT } from '../lib/state.js';
 import { LOGO_HTML, drawLogo } from '../lib/logo.js';
+import { openResume } from '../lib/resume.js';
 
 const BOOK_KEY = 'manoj-museum:guestbook';
 const MODE = { full: 'full tour', express: 'express tour', resume: 'just the resume' };
@@ -81,7 +82,7 @@ function drawSkylight(k) {
   });
   sk.ellipse(300, 206, 540, 360, { strokeWidth: 7, seed: 3 });
   sk.ellipse(300, 206, 500, 330, { strokeWidth: 2, seed: 4 });
-  k.mono(300, 410, 'THE SKYLIGHT · TOP OF THE SPIRAL', { 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700 });
+  k.mono(300, 410, 'THE SKYLIGHT · NEW YORK', { 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700 });
   return { panes, sun };
 }
 
@@ -139,23 +140,22 @@ const giftHTML = () => `
     <p class="mono">The gift shop</p>
     <h3 class="t-h2" id="gift-title">Take something home.</h3>
     <ul class="gift__shelf">
-      <li class="gift__item"><span class="gift__icon" aria-hidden="true">PDF</span><h4>The resume</h4><p>One page, every stop.</p><a class="btn btn--ink" href="/resume.pdf" download>Download</a></li>
+      <li class="gift__item"><span class="gift__icon" aria-hidden="true">PDF</span><h4>The resume</h4><p>One page, every stop.</p><button class="btn btn--ink" type="button" data-resume>View</button></li>
       <li class="gift__item"><span class="gift__icon" aria-hidden="true">VCF</span><h4>Contact card</h4><p>Straight into your phone.</p><button class="btn btn--ink" type="button" data-vcard>Save the card</button></li>
       <li class="gift__item"><span class="gift__icon" aria-hidden="true">PNG</span><h4>Doodle wallpaper</h4><p>Your guide, on your lock screen.</p><button class="btn btn--ink" type="button" data-wallpaper>Make wallpaper</button></li>
     </ul>
-    <ul class="beat__tell"><li class="tellme">Tell me: drop the latest resume at public/resume.pdf</li></ul>
   </section>`;
 
 const exitHTML = () => `
   <section class="exit" aria-labelledby="exit-title">
     <div class="exit__board">
-      <p class="mono exit__kicker">Back on Fifth Avenue</p>
+      <p class="mono exit__kicker">Back on 26th Avenue</p>
       <h3 class="dotf exit__thanks" id="exit-title">THANKS, VISITOR <span data-visitor>${formatVisitor(state.visitor)}</span></h3>
       <div class="exit__guide"></div>
     </div>
     <div class="receipt">
       <p class="receipt__head">${LOGO_HTML}</p>
-      <p class="mono receipt__sub">Fifth Avenue, New York</p>
+      <p class="mono receipt__sub">26th Avenue, New York</p>
       <dl class="receipt__rows">
         <div><dt>Visitor</dt><dd data-r-visitor></dd></div>
         <div><dt>Tour</dt><dd data-r-mode></dd></div>
@@ -180,10 +180,9 @@ export const WINGS = {
   skylight: {
     html: (room) => `
       <div class="skylight">
-        <svg class="skylight__art" viewBox="0 0 600 420" role="img" aria-label="The skylight at the top of the spiral, opening onto a New York dawn"></svg>
+        <svg class="skylight__art" viewBox="0 0 600 420" role="img" aria-label="A skylight opening onto a New York dawn"></svg>
         ${hoardingHTML(room)}
         ${plaqueHTML(room)}
-        ${room.tell?.length ? `<ul class="beat__tell">${room.tell.map((t) => `<li class="tellme">Tell me: ${t}</li>`).join('')}</ul>` : ''}
         ${guestbookHTML()}
         ${giftHTML()}
         ${exitHTML()}
@@ -230,6 +229,7 @@ export const WINGS = {
         paintNotes();
       });
 
+      el.querySelector('[data-resume]').addEventListener('click', (e) => openResume(e.currentTarget));
       el.querySelector('[data-vcard]').addEventListener('click', () => download(new Blob([vcard(room.contact)], { type: 'text/vcard' }), 'manoj-maheshwar-jagadeesan.vcf'));
       el.querySelector('[data-wallpaper]').addEventListener('click', async (e) => {
         const button = e.currentTarget;

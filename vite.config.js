@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { fileStore, visitHandler } from './server/visitors.js';
@@ -36,9 +36,70 @@ function stopPages() {
   };
 }
 
+// The width and height a photo displays at, read from the file itself: JPEG (turned by its EXIF orientation, the way
+// browsers show it) and PNG. Anything else, or a file it can't read, gives null.
+function imageSize(buf) {
+  if (buf.length > 24 && buf.readUInt32BE(0) === 0x89504e47) return [buf.readUInt32BE(16), buf.readUInt32BE(20)];
+  if (buf[0] !== 0xff || buf[1] !== 0xd8) return null;
+  let turned = false;
+  for (let i = 2; i + 9 < buf.length;) {
+    if (buf[i] !== 0xff) { i += 1; continue; }
+    const marker = buf[i + 1];
+    const length = buf.readUInt16BE(i + 2);
+    if (marker === 0xe1 && buf.toString('latin1', i + 4, i + 8) === 'Exif') {
+      const tiff = i + 10;
+      const little = buf.toString('latin1', tiff, tiff + 2) === 'II';
+      const u16 = (o) => (little ? buf.readUInt16LE(o) : buf.readUInt16BE(o));
+      const u32 = (o) => (little ? buf.readUInt32LE(o) : buf.readUInt32BE(o));
+      const ifd = tiff + u32(tiff + 4);
+      for (let k = 0, n = u16(ifd); k < n; k += 1) {
+        const entry = ifd + 2 + k * 12;
+        if (u16(entry) === 0x0112) turned = u16(entry + 8) >= 5;
+      }
+    }
+    // Start of frame: every SOF marker except the huffman, arithmetic and restart tables that share the range.
+    if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+      const height = buf.readUInt16BE(i + 5);
+      const width = buf.readUInt16BE(i + 7);
+      return turned ? [height, width] : [width, height];
+    }
+    i += 2 + length;
+  }
+  return null;
+}
+
+// Every photo's size, from public/photos, as a module the app imports (virtual:photo-sizes). A frame takes the shape of
+// its picture before the picture loads, so nothing on the page moves when it arrives. In development, adding or
+// changing a photo reloads the page with its new size.
+function photoSizes() {
+  const dir = fileURLToPath(new URL('./public/photos/', import.meta.url));
+  const id = 'virtual:photo-sizes';
+  const read = () => Object.fromEntries(readdirSync(dir)
+    .filter((file) => /\.(jpe?g|png)$/i.test(file))
+    .map((file) => [file, imageSize(readFileSync(dir + file))])
+    .filter(([, size]) => size));
+  return {
+    name: 'museum-photo-sizes',
+    resolveId: (source) => (source === id ? `\0${id}` : null),
+    load: (resolved) => (resolved === `\0${id}` ? `export default ${JSON.stringify(read())};` : null),
+    configureServer(server) {
+      const refresh = (file) => {
+        if (!file.startsWith(dir)) return;
+        const mod = server.moduleGraph.getModuleById(`\0${id}`);
+        if (mod) server.moduleGraph.invalidateModule(mod);
+        server.ws.send({ type: 'full-reload' });
+      };
+      server.watcher.add(dir);
+      ['add', 'change', 'unlink'].forEach((event) => server.watcher.on(event, refresh));
+    },
+  };
+}
+
 export default defineConfig({
   // Absolute, so pages at /experience/<slug> find the same assets as the home page.
   base: '/',
   server: { port: 5174, strictPort: true },
-  plugins: [localVisitorCounter(), stopPages()],
+  // The resume viewer loads PDF.js on demand; bundled up front in development, so opening it doesn't reload the page.
+  optimizeDeps: { include: ['pdfjs-dist'] },
+  plugins: [localVisitorCounter(), stopPages(), photoSizes()],
 });

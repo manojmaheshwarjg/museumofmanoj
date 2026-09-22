@@ -24,7 +24,7 @@ const DOORWAY = [[17.38, 2.15, -180.3], [17.38, 2.15, -179.4], [17.38, 0, -179.4
 
 // Where he stands on the walk over from the booth (0 to 1). At the window he is up on the booth floor.
 const WALK = [
-  { at: 0.03, x: 17.42, z: -178, y: 0.81 },
+  { at: 0.005, x: 17.42, z: -178, y: 0.81 },
   { at: 0.13, x: 17.42, z: -179.55, y: 0.81 },
   { at: 0.199, x: 17.42, z: -179.55, y: 0.81 },
   { at: 0.2, x: 17.62, z: -179.85 },
@@ -131,8 +131,10 @@ function createGuide(world) {
     } else if (y < steps[0]) {
       const w = world.rail.local('walk', y);
       along(WALK, w, spot);
-      pose = w < 0.03 ? poses.booth : w < 0.88 ? 'walk' : 'wave';
-      line = w < 0.02 ? lines.booth : w < 0.095 ? 'Meet me at the steps.' : w < 0.26 ? '' : w < 0.84 ? 'Right this way.' : GUIDE_INTRO;
+      pose = w < 0.005 ? poses.booth : w < 0.88 ? 'walk' : 'wave';
+      // His answer at the booth stays with him on the way to his door (the walk in sets off as you choose, so there's
+      // no time for another line in there), then he's out and leading the way.
+      line = w < 0.2 ? lines.booth : w < 0.26 ? '' : w < 0.84 ? 'Right this way.' : GUIDE_INTRO;
     } else {
       along(onSteps(window.innerHeight > window.innerWidth ? 0.35 : 1), world.rail.local('steps', y), spot);
       pose = poses.steps;

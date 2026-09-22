@@ -1,4 +1,4 @@
-// The camera's walk from above Fifth Avenue down to the ticket booth window.
+// The camera's walk from above 26th Avenue down to the ticket booth window.
 // Each shot is a keyframe on scroll progress: where the camera is, and what it looks at.
 
 import { CatmullRomCurve3, Vector3 } from 'three';

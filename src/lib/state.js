@@ -21,7 +21,8 @@ export const state = {
   totalVisitors: Number.isInteger(stored.totalVisitors) ? stored.totalVisitors : null,
   returning: false,
   name: stored.name || '',
-  mode: stored.mode || null,
+  // Express was retired: anyone who chose it before is on the full tour.
+  mode: stored.mode === 'express' ? 'full' : stored.mode || null,
   punched: new Set(stored.punched || []),
   ticketPrinted: Boolean(stored.ticketPrinted),
   startedAt: stored.startedAt || Date.now(),

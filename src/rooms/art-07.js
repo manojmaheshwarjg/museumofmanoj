@@ -132,7 +132,7 @@ export const ART = {
     k.dot(50, 62, 'DEPARTURES · MAA', { 'font-size': 22 });
     k.mono(60, 92, 'DESTINATION', { 'font-size': 10, fill: muted });
     k.mono(400, 92, 'STATUS', { 'font-size': 10, fill: muted });
-    [['DUBAI', 'DEPARTED'], ['SINGAPORE', 'DEPARTED'], ['BUFFALO VIA ?', 'BOARDING'], ['LONDON', 'ON TIME'], ['FRANKFURT', 'ON TIME']].forEach(([dest, status], r) => {
+    [['DUBAI', 'DEPARTED'], ['SINGAPORE', 'DEPARTED'], ['BUFFALO VIA JFK', 'BOARDING'], ['LONDON', 'ON TIME'], ['FRANKFURT', 'ON TIME']].forEach(([dest, status], r) => {
       const y = 124 + r * 31;
       const mine = r === 2;
       if (mine) k.el('rect', { x: 44, y: y - 21, width: 512, height: 29, fill: ink, opacity: 0.92 });

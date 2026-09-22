@@ -15,6 +15,17 @@ const loop = (el, tl) => {
 };
 
 export const FX = {
+  // Marina Beach: the crests roll back and forth, the foam breathes at the shoreline, and the bike rides in.
+  tide: (beat, { quiet }) => {
+    if (quiet) return;
+    const bike = beat.querySelector('.fx-bike');
+    if (bike) enter(beat, () => gsap.from(bike, { x: 380, duration: 1.7, ease: 'power2.out' }));
+    const swell = gsap.timeline({ repeat: -1, yoyo: true, defaults: { ease: 'sine.inOut' } });
+    $$(beat, '.fx-wave').forEach((wave, i) => swell.to(wave, { x: i % 2 ? -14 : 14, duration: 2.4 }, i * 0.4));
+    const foam = beat.querySelector('.fx-foam');
+    if (foam) swell.to(foam, { y: 5, duration: 2.4 }, 0);
+    loop(beat, swell);
+  },
   steam: (beat, { quiet }) => {
     if (quiet) return;
     const puff = gsap.timeline({ repeat: -1 });

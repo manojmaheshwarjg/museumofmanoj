@@ -1,4 +1,4 @@
-// Hand-drawn textures for the Fifth Avenue scene: painted on canvas with rough.js, handed to three.js.
+// Hand-drawn textures for the 26th Avenue scene: painted on canvas with rough.js, handed to three.js.
 // Everything stays in the museum's black and white print palette.
 
 import rough from 'roughjs';
@@ -310,7 +310,7 @@ export function boothFrontTexture() {
   ctx.fillStyle = PAPER;
   ctx.font = '500 22px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('TICKETS PRINT HERE', W / 2, 500);
+  ctx.fillText('ADMISSION IS FREE', W / 2, 500);
   rc.rectangle(60, 530, 180, 86, { stroke: 'rgba(241, 237, 227, .5)', strokeWidth: 2, seed: 5 });
   rc.rectangle(272, 530, 180, 86, { stroke: 'rgba(241, 237, 227, .5)', strokeWidth: 2, seed: 6 });
   return texture(c);
@@ -372,7 +372,7 @@ export function boothSignTextures() {
   return [make(0), make(1)];
 }
 
-// A tiling facade for the towers behind Fifth Avenue: eight floors by eight bays per tile.
+// A tiling facade for the towers behind 26th Avenue: eight floors by eight bays per tile.
 let tower;
 export function towerTexture() {
   if (tower) return tower;

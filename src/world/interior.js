@@ -1,4 +1,4 @@
-// The museum's entrance on Fifth Avenue: the plinth split around a doorway, the three steps, the landing,
+// The museum's entrance on 26th Avenue: the plinth split around a doorway, the three steps, the landing,
 // and the two front doors that swing open at the top of the climb.
 // Behind them there are no rooms, only a shallow vestibule of paper-white light that the walk ends inside,
 // which is what lets the welcome section take the screen without a seam.
@@ -14,7 +14,7 @@ const INK = '#0E0D0B';
 const PAPER = '#F1EDE3';
 const FLOOR = 0.45;
 const DOOR_TOP = 3.0;
-const DOORWAY_X = 22.02; // the plane of the doorway, facing Fifth Avenue
+const DOORWAY_X = 22.02; // the plane of the doorway, facing 26th Avenue
 
 function box(w, h, d, x, y, z, material) {
   const m = new Mesh(new BoxGeometry(w, h, d), material);
