@@ -16,7 +16,6 @@
 .room__card { display: grid; gap: 12px; border: 2px solid currentColor; border-radius: 14px; padding: clamp(16px, 2vw, 24px); }
 .room--paper .room__card { background-color: var(--paper); box-shadow: 6px 6px 0 rgba(14, 13, 11, .14); }
 .room--night .room__card { background-color: var(--night); box-shadow: 6px 6px 0 rgba(241, 237, 227, .12); }
-.room__kicker { display: flex; justify-content: space-between; gap: 10px; margin: 0; opacity: .72; }
 .room__title { font-size: clamp(34px, 4.4vw, 62px); }
 .room__meta { margin: 0; opacity: .75; }
 .room__proof { list-style: none; display: grid; gap: 6px; margin: 2px 0 0; padding: 12px 0 0; border-top: 1.5px dashed currentColor; font-size: 14px; line-height: 1.35; }
@@ -55,6 +54,13 @@
 .photos--1 > .photo { flex: none; width: min(100%, calc(var(--ar) * min(78svh, 700px) + 14px)); rotate: .5deg; }
 .beat:nth-child(even) .photos--1 > .photo { rotate: -.5deg; }
 .photos--4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* One photo across the top and the rest in a row under it, as one grid: the same gap between the rows as between the
+   photos, and no tilt, so the spacing reads true. */
+.photos--lead { flex-direction: column; }
+.photos--lead > .photo:nth-child(n), .photos__row > .photo:nth-child(n) { rotate: none; }
+.photos--lead > .photo { flex: none; width: 100%; }
+.photos__row { display: flex; align-self: stretch; align-items: flex-start; gap: inherit; }
+.photos__row > .photo { flex: var(--ar) 1 14px; min-width: 0; }
 @media (max-width: 719px) {
   .photos--1 > .photo, .photos--3 > .photo { flex: none; width: min(100%, calc(var(--ar) * min(58svh, 460px) + 14px)); }
   .photos--3 { flex-direction: column; align-items: center; }
@@ -101,11 +107,10 @@
 .room__ambient canvas { width: 100%; height: 100%; }
 
 
-/* Effect layers: paper confetti and the frost on landing */
+/* Effect layers: paper confetti */
 .beat__fx i { position: absolute; left: 50%; top: 34%; width: 9px; height: 13px; border: 1.5px solid currentColor; background-color: var(--paper); }
 .room--paper .beat__fx i:nth-child(2n) { background-color: var(--ink); }
 .room--night .beat__fx i:nth-child(2n) { background-color: var(--night); }
-.beat__frost { position: absolute; inset: 0; background-color: var(--paper); opacity: 0; }
 
 /* Room 10 · The permanent collection */
 .gallery { display: grid; gap: clamp(56px, 8vw, 100px); }
@@ -120,11 +125,13 @@
 .exhibit__spot { pointer-events: none; }
 .exhibit__cloth { overflow: visible; }
 .exhibit--cloth .exhibit__frame { cursor: pointer; }
-.exhibit__under { position: absolute; inset: 0; display: grid; place-items: center; background-color: var(--paper); }
+.exhibit__under { position: absolute; inset: 0; display: grid; place-items: center; background-color: var(--paper); color: var(--ink); }
+/* On a dark wall the frame's black edge needs its light outline to read. */
+.room--night .exhibit__frame { outline-color: rgba(241, 237, 227, .35); box-shadow: 12px 14px 0 rgba(241, 237, 227, .07); }
 .exhibit__under .hand { font-size: clamp(40px, 6vw, 76px); rotate: -4deg; }
 .exhibit__label {
   display: grid; justify-items: start; gap: 10px; max-width: 580px; padding: 18px 20px 20px;
-  background-color: var(--paper); border: 2px solid var(--ink); border-radius: 6px; box-shadow: 4px 4px 0 rgba(14, 13, 11, .12);
+  background-color: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 6px; box-shadow: 4px 4px 0 rgba(14, 13, 11, .12);
 }
 .exhibit__no { display: flex; justify-content: space-between; width: 100%; margin: 0; opacity: .7; }
 .exhibit__title { font-size: clamp(30px, 3.6vw, 48px); }
@@ -144,7 +151,7 @@
 .clients__wall li { padding: 12px 6px; font-size: 18px; text-transform: uppercase; border-bottom: 1px dotted rgba(241, 237, 227, .3); }
 .clients__book {
   display: grid; gap: 22px 44px; padding: clamp(18px, 3vw, 34px); border: 2px solid var(--ink); border-radius: 8px;
-  background-color: var(--paper); background-image: repeating-linear-gradient(transparent 0 33px, rgba(14, 13, 11, .1) 33px 34px);
+  background-color: var(--paper); color: var(--ink); background-image: repeating-linear-gradient(transparent 0 33px, rgba(14, 13, 11, .1) 33px 34px);
   box-shadow: 6px 6px 0 rgba(14, 13, 11, .14);
 }
 @media (min-width: 760px) { .clients__book { grid-template-columns: 1fr 1fr; } }
@@ -204,7 +211,7 @@
 .hoarding__tape { height: 26px; border: 2px solid var(--ink); background: repeating-linear-gradient(-45deg, var(--ink) 0 18px, var(--paper) 18px 36px); }
 .hoarding__wall {
   display: grid; gap: 22px; padding: clamp(22px, 3vw, 34px) clamp(16px, 3vw, 30px); border-inline: 2px solid var(--ink);
-  background-color: var(--paper-3); background-image: linear-gradient(90deg, rgba(14, 13, 11, .16) 2px, transparent 2px); background-size: 25% 100%;
+  background-color: var(--paper-3); color: var(--ink); background-image: linear-gradient(90deg, rgba(14, 13, 11, .16) 2px, transparent 2px); background-size: 25% 100%;
 }
 @media (min-width: 760px) { .hoarding__wall { grid-template-columns: repeat(3, minmax(0, 1fr)); } .poster--big { grid-column: 1 / -1; } }
 .poster { position: relative; display: grid; align-content: start; gap: 8px; padding: 18px 16px; background-color: var(--paper); border: 2px solid var(--ink); rotate: var(--tilt, 0deg); box-shadow: 4px 5px 0 rgba(14, 13, 11, .18); }
@@ -213,12 +220,6 @@
 .poster__coming { margin: 0; font-size: clamp(18px, 2.4vw, 26px); }
 .poster__team { margin: 0; font-size: clamp(54px, 9vw, 120px); font-weight: 800; line-height: .9; letter-spacing: -.04em; }
 .poster--big .mono { max-width: 40em; margin: 0; font-size: 13px; letter-spacing: .02em; text-transform: none; opacity: .8; }
-.poster__days { margin: 0; opacity: .7; }
-.poster__phase { margin: 0; font-size: clamp(32px, 3.4vw, 44px); font-weight: 800; line-height: 1; letter-spacing: -.03em; }
-.poster__goal { margin: 0; font-size: 16px; line-height: 1.4; }
-.poster__steps { display: grid; gap: 4px; margin: 0; padding-left: 1.1em; font-family: var(--f-hand); font-size: 22px; line-height: 1.05; }
-.poster__result { display: grid; gap: 2px; margin: 6px 0 0; padding-top: 10px; border-top: 1.5px dashed var(--ink); font-weight: 800; line-height: 1.25; }
-.poster__result .mono { font-weight: 400; opacity: .7; }
 
 .plaque {
   position: relative; display: grid; justify-items: center; gap: 14px; padding: clamp(30px, 5vw, 50px) clamp(18px, 4vw, 44px); text-align: center;
@@ -232,36 +233,25 @@
 .plaque__title { margin: 0; font-size: clamp(44px, 7vw, 88px); font-weight: 800; line-height: .9; letter-spacing: -.04em; }
 .plaque__lines { list-style: none; display: grid; gap: 6px; margin: 0; padding: 0; font-size: clamp(17px, 2.3vw, 25px); text-transform: uppercase; }
 .plaque__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 6px; }
-.plaque__email { margin: 0; text-transform: none; opacity: .7; }
-
-.guestbook { display: grid; gap: 18px; }
-.guestbook__head { display: grid; gap: 8px; }
-.guestbook__head .mono { margin: 0; opacity: .7; }
-.guestbook__note { margin: 0; color: #55524A; }
-.guestbook__form { display: grid; gap: 12px; padding: 18px; background-color: var(--paper); border: 2px solid var(--ink); border-radius: 12px; box-shadow: 5px 5px 0 rgba(14, 13, 11, .14); }
-@media (min-width: 760px) {
-  .guestbook__form { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: end; }
-  .guestbook__form button { grid-column: 1 / -1; justify-self: start; }
-}
-.guestbook__form label { display: grid; gap: 6px; }
-.guestbook__form textarea, .guestbook__form input {
-  width: 100%; padding: 10px 12px; border: 2px dashed var(--ink); border-radius: 10px; background: transparent; color: var(--ink);
-  font-family: var(--f-hand); font-size: 24px; line-height: 1.1; resize: vertical;
-}
-.guestbook__form textarea:focus, .guestbook__form input:focus { outline: none; border-style: solid; }
-.guestbook__page { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
-.guestbook__page li { display: grid; gap: 2px; padding: 12px 14px; background-color: var(--paper); border: 1.5px solid rgba(14, 13, 11, .35); border-radius: 8px; rotate: var(--tilt, 0deg); }
-.guestbook__page .hand { font-size: 24px; }
-.guestbook__page .mono { opacity: .7; }
 
 .gift { display: grid; gap: 14px; }
 .gift > .mono { margin: 0; opacity: .7; }
 .gift__shelf { list-style: none; display: grid; gap: 14px; margin: 8px 0 0; padding: 0; }
-@media (min-width: 760px) { .gift__shelf { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.gift__item { display: grid; justify-items: start; align-content: start; gap: 8px; padding: 18px; background-color: var(--paper); border: 2px solid var(--ink); border-radius: 12px; box-shadow: 5px 5px 0 rgba(14, 13, 11, .14); }
-.gift__item h4 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+/* Two gifts, one row each and made the same way: the resume first, with a tag saying so, then the contact card. */
+.gift__item {
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px 22px;
+  padding: clamp(18px, 2.6vw, 26px); background-color: var(--print); color: var(--ink); border: 2px solid var(--ink); border-radius: 12px;
+  box-shadow: 6px 6px 0 rgba(241, 237, 227, .16);
+}
+.gift__item h4 { margin: 0; font-size: clamp(24px, 2.6vw, 30px); line-height: 1.05; letter-spacing: -.02em; }
 .gift__item p { margin: 0; color: #55524A; }
-.gift__icon { padding: 10px 12px; border: 2px solid var(--ink); border-radius: 8px 18px 8px 8px; font-family: var(--f-dot); font-size: 22px; font-weight: 900; }
+.gift__icon { padding: 12px 14px; border: 2px solid var(--ink); border-radius: 8px 18px 8px 8px; font-family: var(--f-dot); font-size: 24px; font-weight: 900; }
+.gift__copy { display: grid; gap: 4px; }
+.gift__tag { position: absolute; top: -18px; right: 22px; padding: 2px 12px 4px; background-color: var(--paper); border: 2px solid var(--ink); border-radius: 999px; font-size: 22px; rotate: 3deg; }
+@media (max-width: 559px) {
+  .gift__item { grid-template-columns: auto minmax(0, 1fr); }
+  .gift__item .btn { grid-column: 1 / -1; justify-self: stretch; }
+}
 
 .exit { display: grid; gap: 22px; }
 @media (min-width: 900px) { .exit { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: start; } }

@@ -1,4 +1,4 @@
-// Room 02 · Chennai is where the story starts. Illustrations for each beat, drawn at 600 × 420.
+// Room 02 · Chennai is where my story starts. Illustrations for each beat, drawn at 600 × 420.
 // Elements with fx-* classes are the parts the 4D effects animate.
 
 export const ART = {
@@ -40,42 +40,70 @@ export const ART = {
     sk.path('M70 54 Q85 34 100 54 Z', { fill: ink, fillStyle: 'solid', seed: 18 });
     k.pen('M102 60 L176 40 M102 70 L182 94', { 'stroke-width': 1.6, 'stroke-dasharray': '6 6', opacity: 0.7 });
 
-    // the Gixxer SF 150, parked on the sand, facing the lighthouse
-    k.el('ellipse', { cx: 414, cy: 402, rx: 152, ry: 9, fill: dots, opacity: 0.55 });
+    // The Gixxer SF 155, parked on the sand facing the lighthouse, in its Suzuki blue: the full fairing and windscreen,
+    // the split seat and the tail, lime pinstripes, SUZUKI across the side the way the livery splits it, and the red S.
+    // Drawn in a real photo's proportions, then scaled down onto the sand.
+    k.el('ellipse', { cx: 420, cy: 402, rx: 158, ry: 9, fill: dots, opacity: 0.55 });
     const bike = k.group({ class: 'fx-bike' });
-    const b = k.into(bike);
-    b.path('M452 262 L500 256 L560 236 L568 246 L520 272 L468 284 Z', { fill: ink, fillStyle: 'solid', seed: 60 });
-    b.rect(556, 238, 9, 6, { fill: ground, fillStyle: 'solid', seed: 61 });
-    b.path('M372 264 Q384 238 414 236 Q444 236 456 264 Z', { fill: ink, fillStyle: 'solid', seed: 62 });
-    b.rect(392, 318, 64, 38, { fill: hatch, fillStyle: 'solid', seed: 63 });
-    for (let x = 400; x < 452; x += 9) k.pen(`M${x} 323 V351`, { 'stroke-width': 1.4 }, bike);
-    b.path('M444 356 L480 350 L534 328 L542 340 L488 364 L446 366 Z', { fill: dots, fillStyle: 'solid', seed: 64 });
-    b.path('M456 344 L506 352 L504 362 L456 356 Z', { fill: ink, fillStyle: 'solid', seed: 65 });
-    b.path('M286 298 L302 270 L346 258 L378 264 L458 266 L474 298 L448 336 L372 338 Q322 328 286 298 Z', { fill: ink, fillStyle: 'solid', seed: 66 });
-    b.path('M302 270 L318 244 L346 250 L346 258 Z', { fill: dots, fillStyle: 'solid', seed: 67 });
-    b.path('M286 298 L296 280 L312 284 L304 300 Z', { fill: ground, fillStyle: 'solid', seed: 68 });
-    k.dot(334, 314, 'GIXXER SF', { 'font-size': 15, fill: ground }, bike);
-    k.pen('M352 256 L368 250 M346 252 L338 238', { 'stroke-width': 3 }, bike);
-    b.circle(336, 233, 12, { fill: ink, fillStyle: 'solid', seed: 69 });
-    k.pen('M312 302 L320 356 M322 300 L330 354', { 'stroke-width': 3.2 }, bike);
-    [[322, 358], [506, 358]].forEach(([cx, cy], i) => {
-      b.circle(cx, cy, 82, { fill: ink, fillStyle: 'solid', seed: 70 + i });
-      b.circle(cx, cy, 52, { fill: ground, fillStyle: 'solid', seed: 72 + i });
-      for (let spoke = 0; spoke < 5; spoke += 1) {
-        const a = (spoke / 5) * Math.PI * 2 - Math.PI / 2;
-        k.pen(`M${cx} ${cy} L${(cx + Math.cos(a) * 24).toFixed(1)} ${(cy + Math.sin(a) * 24).toFixed(1)}`, { 'stroke-width': 3 }, bike);
+    const body = k.group({ transform: 'translate(322 358) scale(0.453) translate(-137 -300)' }, bike);
+    const b = k.into(body);
+    const BLUE = '#1E56C8';
+    const DEEP = '#16409B';
+    const LIME = '#D6E43C';
+    const BLACK = '#15161A';
+    const RED = '#E0262B';
+    const WHITE = '#F4F6FA';
+    const solid = (fill, seed, o = {}) => ({ fill, fillStyle: 'solid', strokeWidth: 4.4, roughness: 1.1, bowing: 0.7, seed, ...o });
+    const wheel = (cx, cy, seed, disc) => {
+      b.circle(cx, cy, 170, solid(BLACK, seed));
+      b.circle(cx, cy, 118, solid(ground, seed + 1, { stroke: 'none' }));
+      if (disc) b.circle(cx, cy, 92, solid('#8E959F', seed + 2, { strokeWidth: 3 }));
+      for (let i = 0; i < 5; i += 1) {
+        const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+        const d = `M${cx} ${cy} L${(cx + Math.cos(a - 0.12) * 60).toFixed(1)} ${(cy + Math.sin(a - 0.12) * 60).toFixed(1)} M${cx} ${cy} L${(cx + Math.cos(a + 0.12) * 60).toFixed(1)} ${(cy + Math.sin(a + 0.12) * 60).toFixed(1)}`;
+        k.pen(d, { 'stroke-width': 12 }, body);
+        k.pen(d, { stroke: BLACK, 'stroke-width': 7 }, body);
       }
-      b.circle(cx, cy, 12, { fill: ink, fillStyle: 'solid', seed: 74 + i });
-    });
-    b.path('M294 334 Q322 308 350 334', { strokeWidth: 3, seed: 76 });
-    k.pen('M436 358 L420 394', { 'stroke-width': 3 }, bike);
+      b.circle(cx, cy, 124, { stroke: LIME, strokeWidth: 5, roughness: 0.5, seed: seed + 3 });
+      b.circle(cx, cy, 26, solid(BLACK, seed + 4));
+    };
+
+    b.path('M586 126 L604 122 L652 258 L636 268 Z', solid(BLACK, 60));
+    b.path('M626 204 L652 198 L664 262 L640 268 Z', solid(BLACK, 61));
+    wheel(543, 300, 62, false);
+    b.path('M418 246 L548 290 L540 314 L412 272 Z', solid(BLACK, 67));
+    b.path('M296 246 L372 236 L394 300 L362 338 L290 330 Z', solid(BLACK, 68));
+    b.path('M352 150 L400 148 L446 252 L420 262 Z', solid(BLACK, 69));
+    b.path('M402 282 L456 270 L460 284 L406 296 Z', solid('#A7ADB6', 70, { strokeWidth: 3 }));
+    b.path('M440 150 L520 118 L606 102 L616 114 L596 126 L520 160 L470 172 Z', solid(BLUE, 71));
+    b.path('M596 104 L614 106 L612 120 L594 124 Z', solid(RED, 72, { strokeWidth: 3 }));
+    b.path('M354 118 Q400 104 452 106 L472 98 Q520 92 562 96 L590 108 L560 118 Q506 118 470 130 L448 142 L366 148 Z', solid(BLACK, 73));
+    b.path('M244 118 Q290 78 332 84 Q358 90 372 120 L378 176 L318 196 L262 188 Z', solid(BLUE, 74));
+    b.path('M98 176 L112 150 Q160 118 214 106 L252 114 L266 188 L322 198 L382 178 L392 212 L352 262 L340 340 Q300 354 250 342 L214 300 L186 262 L148 228 L106 206 Z', solid(BLUE, 75));
+    b.path('M218 304 L252 342 Q300 354 340 340 L346 296 Z', solid(DEEP, 76, { stroke: 'none' }));
+    wheel(137, 300, 77, true);
+    b.path('M166 212 L184 206 L146 302 L128 296 Z', solid(BLACK, 82));
+    b.path('M78 262 Q110 212 178 236 L192 252 Q128 234 94 270 Z', solid(BLUE, 83));
+    b.path('M118 150 Q140 90 176 54 Q198 70 214 106 Q170 114 118 150 Z', solid('rgba(196, 214, 238, .62)', 84, { strokeWidth: 3.4 }));
+    b.path('M100 172 L134 158 L140 170 L106 190 Z', solid('#E8ECF2', 85, { strokeWidth: 3 }));
+    b.path('M74 58 L112 52 L118 76 L84 84 Z', solid(BLACK, 86));
+    k.pen('M112 72 L142 112', { stroke: BLACK, 'stroke-width': 6 }, body);
+    b.path('M196 94 L258 110 L254 124 L192 108 Z', solid(BLACK, 87));
+    [['M104 196 Q150 186 198 188'], ['M214 208 Q292 188 378 160'], ['M500 146 Q556 128 606 118']].forEach(([d]) => k.pen(d, { stroke: LIME, 'stroke-width': 5 }, body));
+    k.display(192, 266, 'SU', { fill: WHITE, 'font-size': 60, 'font-style': 'italic' }, body);
+    k.display(300, 186, 'KI', { fill: WHITE, 'font-size': 54, 'font-style': 'italic' }, body);
+    k.display(262, 162, 'S', { fill: RED, 'font-size': 30, 'font-style': 'italic' }, body);
+    k.display(258, 336, 'SUZUKI', { fill: WHITE, 'font-size': 15, 'font-style': 'italic' }, body);
+    k.text(196, 212, 'GIXXER', { fill: WHITE, 'font-size': 13, 'font-weight': 700 }, body);
+    // The side stand, on its own so it can swing: up while the bike rolls in, down once it's parked (fx-motion.js).
+    k.pen('M350 330 L364 402 M358 402 L376 400', { 'stroke-width': 6 }, k.group({ class: 'fx-stand' }, body));
 
     // a note in the margin, with the plate
-    k.hand(484, 50, 'my Gixxer SF 150', { 'text-anchor': 'middle', 'font-size': 28 });
-    sk.rect(412, 62, 144, 36, { fill: ground, fillStyle: 'solid', strokeWidth: 2.2, seed: 77 });
+    k.hand(484, 50, 'my Gixxer SF 155', { 'text-anchor': 'middle', 'font-size': 28 });
+    sk.rect(396, 62, 176, 36, { fill: ground, fillStyle: 'solid', strokeWidth: 2.2, seed: 77 });
     k.mono(484, 86, 'TN 02 BD 6**6', { 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 700 });
-    k.pen('M470 104 Q500 168 444 226', { 'stroke-width': 2, 'stroke-dasharray': '5 5' });
-    k.pen('M444 226 l4 -13 M444 226 l13 -4', { 'stroke-width': 2 });
+    k.pen('M470 104 Q500 168 434 238', { 'stroke-width': 2, 'stroke-dasharray': '5 5' });
+    k.pen('M434 238 l4 -13 M434 238 l13 -4', { 'stroke-width': 2 });
   },
 
   circuit: (k) => {

@@ -1,5 +1,5 @@
-// 4D effects that draw, type and tick: pens writing, circuits lighting up, a terminal typing,
-// a departures board flipping, a 24-hour countdown and wall clocks on real time.
+// 4D effects that draw and tick: lines drawing themselves in, circuits lighting up, a departures board flipping,
+// a 24-hour countdown and wall clocks on real time.
 
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -26,7 +26,6 @@ function drawIn(beat, selector, { quiet, stagger = 0.16, duration = 0.5, after }
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
 export const FX = {
-  write: (beat, { quiet }) => drawIn(beat, '.fx-line', { quiet, stagger: 0.2, duration: 0.55 }),
   underline: (beat, { quiet }) => drawIn(beat, '.fx-underline, .fx-circle', { quiet, stagger: 0.5, duration: 0.7 }),
   checklist: (beat, { quiet }) => drawIn(beat, '.fx-check', { quiet, stagger: 0.45, duration: 0.35 }),
 
@@ -41,30 +40,6 @@ export const FX = {
         const blink = gsap.to(leds[1], { opacity: 0.25, duration: 0.5, repeat: -1, yoyo: true, ease: 'steps(1)', paused: true, delay: 1 });
         whileVisible(beat, () => blink.play(), () => blink.pause());
       },
-    });
-  },
-
-  terminal: (beat, { quiet }) => {
-    const lines = [...beat.querySelectorAll('.fx-type')];
-    const cursor = beat.querySelector('.fx-cursor');
-    const badge = beat.querySelector('.fx-badge');
-    if (quiet || !lines.length) return;
-    const texts = lines.map((line) => line.textContent);
-    lines.forEach((line) => { line.textContent = ''; });
-    gsap.set(badge, { autoAlpha: 0 });
-    const blink = gsap.to(cursor, { opacity: 0, duration: 0.5, repeat: -1, yoyo: true, ease: 'steps(1)', paused: true });
-    whileVisible(beat, () => blink.play(), () => blink.pause());
-    enter(beat, () => {
-      const tl = gsap.timeline();
-      lines.forEach((line, i) => {
-        const full = texts[i];
-        const typed = { n: 0 };
-        tl.to(typed, {
-          n: full.length, ease: 'none', duration: full.startsWith('$') ? full.length * 0.045 : 0.25,
-          onUpdate: () => { line.textContent = full.slice(0, Math.round(typed.n)); },
-        }, i ? '+=0.3' : 0);
-      });
-      tl.fromTo(badge, { autoAlpha: 0, scale: 1.6, svgOrigin: '450 348' }, { autoAlpha: 1, scale: 1, duration: 0.45, ease: 'back.out(2)' });
     });
   },
 

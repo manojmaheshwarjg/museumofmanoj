@@ -59,28 +59,29 @@ export const ART = {
     k.mono(452, 400, 'APR 2021 ONWARD', { 'text-anchor': 'end', 'font-size': 11, fill: muted });
   },
 
+  // Where the clients were: America, Europe and all over India, pinned on a map of land only.
   'world-pins': (k) => {
-    const { ink, ground, muted, rnd } = k;
+    const { ink, ground, muted } = k;
     let d = '';
     WORLD.rows.forEach((row, r) => {
       for (let c = 0; c < row.length; c++) if (row[c] === '1') d += `M${30 + c * 3} ${110 + r * 3}h2.2v2.2h-2.2z`;
     });
     k.el('path', { d, fill: ink, opacity: 0.55 });
     k.dot(30, 72, '30+ CLIENT ENGAGEMENTS', { 'font-size': 20 });
+    // A place onto the dot grid: a dot every 2 degrees, from 76 N and 180 W.
+    const at = (lon, lat) => [31 + ((lon - WORLD.lon0) / WORLD.step) * 3, 111 + ((WORLD.lat0 - lat) / WORLD.step) * 3];
     const pins = k.group({ class: 'fx-pins' });
-    let placed = 0;
-    for (let guard = 0; placed < 8 && guard < 800; guard++) {
-      const r = 6 + Math.floor(rnd() * 44);
-      const c = Math.floor(rnd() * 180);
-      if (WORLD.rows[r][c] !== '1') continue;
-      const x = 31 + c * 3;
-      const y = 111 + r * 3;
-      const g = k.group({ class: 'fx-pin' }, pins);
-      k.el('path', { d: `M${x} ${y}c-7-9-11-14-11-20a11 11 0 1 1 22 0c0 6-4 11-11 20z`, fill: ink, stroke: ground, 'stroke-width': 1.5 }, g);
-      k.el('circle', { cx: x, cy: y - 20, r: 4, fill: ground }, g);
-      placed += 1;
-    }
-    k.mono(30, 390, 'PIN SPOTS ARE PLACEHOLDERS UNTIL THE CLIENT LIST IS IN', { 'font-size': 10, fill: muted });
+    [
+      [-122.4, 37.8, 1], [-74, 40.7, 1], // America: San Francisco, New York
+      [-0.1, 51.5, 1], [13.4, 52.5, 1], // Europe: London, Berlin
+      [77.2, 28.6, 0.72], [72.9, 19.1, 0.72], [80.3, 13.1, 0.72], // India: Delhi, Mumbai, Chennai
+    ].forEach(([lon, lat, size]) => {
+      const [x, y] = at(lon, lat);
+      const place = k.group({ transform: `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${size})` }, k.group({ class: 'fx-pin' }, pins));
+      k.el('path', { d: 'M0 0c-7-9-11-14-11-20a11 11 0 1 1 22 0c0 6-4 11-11 20z', fill: ink, stroke: ground, 'stroke-width': 1.5 }, place);
+      k.el('circle', { cx: 0, cy: -20, r: 4, fill: ground }, place);
+    });
+    k.mono(30, 390, 'EUROPE · AMERICA · INDIA', { 'font-size': 11, fill: muted });
   },
 
   'design-to-code': (k) => {

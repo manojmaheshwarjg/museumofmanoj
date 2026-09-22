@@ -50,11 +50,16 @@
 </head>
 <body data-mode="full">
   <div class="loader" data-loader aria-hidden="true">
-    <p class="loader__note"><span>Drawing 26th Avenue</span><span data-loader-pct>0%</span></p>
+    <div class="loader__card">
+      <p class="logo loader__logo" data-loader-logo><span>MUSEUM</span><span class="logo__of">of</span><span>MANOJ</span></p>
+      <ol class="loader__holes" data-loader-holes><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ol>
+      <p class="loader__note"><span>Drawing 26th Avenue</span><span data-loader-pct>0%</span></p>
+    </div>
   </div>
   <script>
-    // The loader: the night ground the city is drawn on, and how far along it is. It runs before any other script has
-    // arrived; main.js reports progress through window.__loader and says when to lift it.
+    // The loader: the night ground the city is drawn on, the museum's name, and a ticket's twelve holes punched one by
+    // one as the city comes together. It runs before any other script has arrived; main.js reports progress through
+    // window.__loader and says when to lift it.
     (function () {
       var root = document.documentElement;
       var loader = document.querySelector('[data-loader]');
@@ -62,6 +67,15 @@
       history.scrollRestoration = 'manual';
       root.classList.add('is-loading');
       var pct = loader.querySelector('[data-loader-pct]');
+      var holes = loader.querySelectorAll('[data-loader-holes] li');
+      var punched = -1;
+      // The name shows once its lettering has arrived, never in a stand-in font first.
+      var logo = loader.querySelector('[data-loader-logo]');
+      var showLogo = function () { logo.classList.add('is-ready'); };
+      if (document.fonts && document.fonts.load) {
+        Promise.all([document.fonts.load('700 40px Doto'), document.fonts.load('italic 400 40px "Instrument Serif"')]).then(showLogo, showLogo);
+        setTimeout(showLogo, 1200);
+      } else showLogo();
       var shown = 0;
       var target = 0;
       var last = performance.now();
@@ -81,6 +95,14 @@
         var goal = finishing ? 1 : Math.min(target, 0.96);
         shown += (goal - shown) * (1 - Math.exp(-dt * (finishing ? 30 : 6)));
         pct.textContent = Math.round(shown * 100) + '%';
+        var n = Math.min(holes.length, Math.floor(shown * holes.length + 0.001));
+        if (n !== punched) {
+          punched = n;
+          for (var i = 0; i < holes.length; i += 1) {
+            holes[i].classList.toggle('is-punched', i < n);
+            holes[i].classList.toggle('is-next', i === n);
+          }
+        }
         if (finishing && shown > 0.995) { finishing(); return; }
         requestAnimationFrame(tick);
       };

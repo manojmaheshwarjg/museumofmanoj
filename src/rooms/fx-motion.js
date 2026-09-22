@@ -1,5 +1,5 @@
 // 4D effects that move things: steam, confetti, sticky notes, cards walking into shipped, a meter,
-// a printer, a coin jar, stacks of screens, stamps, frost on landing, and a few quiet loops.
+// a printer, a coin jar, stacks of screens, and a few quiet loops.
 // Every drawing already shows its finished state, so with reduced motion these simply do nothing.
 
 import gsap from 'gsap';
@@ -18,8 +18,16 @@ export const FX = {
   // Marina Beach: the crests roll back and forth, the foam breathes at the shoreline, and the bike rides in.
   tide: (beat, { quiet }) => {
     if (quiet) return;
+    // The bike rolls in with its side stand folded up, and puts the stand down once it's parked.
     const bike = beat.querySelector('.fx-bike');
-    if (bike) enter(beat, () => gsap.from(bike, { x: 380, duration: 1.7, ease: 'power2.out' }));
+    const stand = beat.querySelector('.fx-stand');
+    if (stand) gsap.set(stand, { rotation: -75, transformOrigin: '0% 0%' });
+    if (bike) {
+      enter(beat, () => {
+        const ride = gsap.timeline().from(bike, { x: 380, duration: 1.7, ease: 'power2.out' });
+        if (stand) ride.to(stand, { rotation: 0, duration: 0.45, ease: 'back.out(2.2)' }, '-=0.1');
+      });
+    }
     const swell = gsap.timeline({ repeat: -1, yoyo: true, defaults: { ease: 'sine.inOut' } });
     $$(beat, '.fx-wave').forEach((wave, i) => swell.to(wave, { x: i % 2 ? -14 : 14, duration: 2.4 }, i * 0.4));
     const foam = beat.querySelector('.fx-foam');
@@ -138,40 +146,6 @@ export const FX = {
     enter(beat, () => gsap.to(items, { y: 0, autoAlpha: 1, duration: 0.45, stagger: 0.09, ease: 'bounce.out' }));
   },
 
-  stamp: (beat, { quiet }) => {
-    const stamp = beat.querySelector('.fx-stamp');
-    const words = beat.querySelector('.fx-words');
-    const stage = beat.querySelector('.beat__stage');
-    if (quiet || !stamp) return;
-    gsap.set(stamp, { autoAlpha: 0 });
-    if (words) gsap.set(words, { autoAlpha: 0, scale: 0.6, transformOrigin: '20% 100%' });
-    enter(beat, () => {
-      const tl = gsap.timeline();
-      if (words) tl.to(words, { autoAlpha: 1, scale: 1, duration: 0.5, ease: 'back.out(2.2)' });
-      tl.fromTo(stamp, { autoAlpha: 0, scale: 2.6, transformOrigin: '50% 50%' }, { autoAlpha: 1, scale: 1, duration: 0.28, ease: 'power4.in' }, words ? '+=0.35' : 0)
-        .fromTo(stage, { x: -4 }, { x: 0, duration: 0.4, ease: 'elastic.out(1, 0.3)' });
-    });
-  },
-
-  // Landing: a stamp, then a frosty white breath of cold air across the scene.
-  frost: (beat, { quiet, fx }) => {
-    if (quiet) return;
-    const flakes = $$(beat, '.fx-frost path');
-    const stamp = beat.querySelector('.fx-stamp');
-    const veil = document.createElement('div');
-    veil.className = 'beat__frost';
-    fx.appendChild(veil);
-    gsap.set(flakes, { scale: 0, transformOrigin: '50% 50%' });
-    if (stamp) gsap.set(stamp, { autoAlpha: 0 });
-    enter(beat, () => {
-      const tl = gsap.timeline();
-      if (stamp) tl.fromTo(stamp, { autoAlpha: 0, scale: 2.4, transformOrigin: '50% 50%' }, { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'power4.in' });
-      tl.to(veil, { opacity: 0.85, duration: 0.5, ease: 'power2.in' }, '+=0.4')
-        .to(veil, { opacity: 0, duration: 1.6, ease: 'power2.out' })
-        .to(flakes, { scale: 1, duration: 0.6, stagger: 0.05, ease: 'back.out(2)' }, '-=1.4');
-    }, 'top 55%');
-  },
-
   laptops: (beat, { quiet }) => {
     const screens = $$(beat, '.fx-screen');
     if (quiet || !screens.length) return;
@@ -206,22 +180,6 @@ export const FX = {
     loop(beat, gsap.timeline({ repeat: -1 }).to(bulbs, { opacity: 0.2, duration: 0.2, stagger: { each: 0.12, repeat: 1, yoyo: true } }));
   },
 
-  submit: (beat, { quiet }) => {
-    const btn = beat.querySelector('.fx-submit');
-    if (quiet || !btn) return;
-    enter(beat, () => gsap.timeline({ delay: 0.6 })
-      .to(btn, { scale: 0.92, transformOrigin: '50% 50%', duration: 0.1, yoyo: true, repeat: 1 })
-      .fromTo(beat.querySelector('.beat__stage'), { x: 0 }, { x: 3, duration: 0.05, yoyo: true, repeat: 5 }));
-  },
-
-  scale: (beat, { quiet }) => {
-    const scale = beat.querySelector('.fx-scale');
-    const needle = beat.querySelector('.fx-needle');
-    if (quiet || !scale) return;
-    loop(beat, gsap.timeline({ repeat: -1, yoyo: true }).fromTo(scale, { rotation: -4, svgOrigin: '300 0' }, { rotation: 4, svgOrigin: '300 0', duration: 1.2, ease: 'sine.inOut' }));
-    if (needle) enter(beat, () => gsap.fromTo(needle, { rotation: -60, svgOrigin: '300 94' }, { rotation: 20, svgOrigin: '300 94', duration: 1.6, ease: 'elastic.out(1, 0.3)' }));
-  },
-
   // The quietest room: the walk away follows your scroll, slowly.
   walk: (beat, { quiet }) => {
     const walker = beat.querySelector('.fx-walk');
@@ -239,16 +197,6 @@ export const FX = {
         .to(flake, { y: 44, opacity: 0, duration: 2.2, ease: 'none' }), 0);
     });
     loop(beat, snow);
-  },
-
-  tryon: (beat, { quiet }) => {
-    const hanger = beat.querySelector('.fx-hanger');
-    const sparkles = $$(beat, '.fx-sparkle');
-    if (quiet) return;
-    const tl = gsap.timeline({ repeat: -1, yoyo: true });
-    if (hanger) tl.fromTo(hanger, { rotation: -6, svgOrigin: '480 96' }, { rotation: 6, svgOrigin: '480 96', duration: 1.1, ease: 'sine.inOut' }, 0);
-    if (sparkles.length) tl.fromTo(sparkles, { scale: 0.4, opacity: 0.2, transformOrigin: '50% 50%' }, { scale: 1.1, opacity: 1, duration: 0.55, stagger: 0.18 }, 0);
-    loop(beat, tl);
   },
 
   // Office windows across the skyline switch on and off.

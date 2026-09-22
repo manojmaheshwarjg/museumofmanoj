@@ -1,4 +1,4 @@
-// Room 07 · The leap. Nine scenes from the decision to landing, drawn at 600 × 420.
+// Room 07 · The leap. Four scenes, from the decision to the flight, drawn at 600 × 420.
 // Documents are drawn, never scanned: no passport, visa or I-20 numbers anywhere.
 
 import { WORLD } from '../data/land.js';
@@ -20,85 +20,6 @@ export const ART = {
     k.pen(k.scribble(172, 322, 160, 1.4), { stroke: ground, 'stroke-width': 1.6, opacity: 0.6 }, page);
     sk.path('M486 330 h46 v40 q0 14-14 14 h-18 q-14 0-14-14z', { fill: ground, fillStyle: 'solid', seed: 6 });
     sk.path('M532 340 q16 4 0 22', { strokeWidth: 2.4, seed: 7 });
-  },
-
-  applications: (k) => {
-    const { sk, ink, ground, muted } = k;
-    sk.rect(50, 40, 500, 330, { fill: ground, fillStyle: 'solid', strokeWidth: 3, seed: 3 });
-    for (let i = 0; i < 9; i++) sk.path(`M${60 + i * 54} 72 l8-22 h36 l8 22`, { fill: i === 8 ? ink : ground, fillStyle: 'solid', strokeWidth: 1.6, seed: 10 + i });
-    sk.line(50, 72, 550, 72, { strokeWidth: 2, seed: 4 });
-    k.mono(80, 100, 'STATEMENT OF PURPOSE', { 'font-size': 11, 'font-weight': 700, fill: muted });
-    for (let r = 0; r < 7; r++) k.pen(k.scribble(80, 124 + r * 24, r === 6 ? 150 : 290, 1.6), { 'stroke-width': 1.8 });
-    [0, 1, 2].forEach((i) => sk.rect(412 + i * 8, 96 + i * 10, 92, 112, { fill: ground, fillStyle: 'solid', strokeWidth: 1.8, seed: 20 + i }));
-    k.mono(470, 240, 'LETTERS', { 'text-anchor': 'middle', 'font-size': 10, fill: muted });
-    const btn = k.group({ class: 'fx-submit' });
-    k.into(btn).rect(360, 288, 160, 52, { fill: ink, fillStyle: 'solid', stroke: ink, seed: 30 });
-    k.dot(440, 323, 'SUBMIT', { 'text-anchor': 'middle', 'font-size': 22, fill: ground }, btn);
-    k.el('path', { d: 'M474 320 l0 34 9-9 7 15 7-3 -7-15 12 0z', fill: ground, stroke: ink, 'stroke-width': 2 });
-    k.el('path', { d: 'M92 338 a26 26 0 1 0 30 -34 a20 20 0 1 1 -30 34z', fill: ink });
-  },
-
-  admit: (k) => {
-    const { sk, ink, ground } = k;
-    const phone = k.group({ class: 'fx-buzz' });
-    const p = k.into(phone);
-    p.rect(205, 30, 190, 360, { fill: ground, fillStyle: 'solid', strokeWidth: 3.2, seed: 3 });
-    p.rect(218, 62, 164, 294, { fill: ink, fillStyle: 'solid', stroke: ink, seed: 4 });
-    k.mono(300, 104, 'UNIVERSITY AT BUFFALO', { 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: ground }, phone);
-    k.mono(300, 122, 'M.S. ARTIFICIAL INTELLIGENCE', { 'text-anchor': 'middle', 'font-size': 8.5, fill: ground }, phone);
-    k.hand(300, 202, 'Congrats!', { 'text-anchor': 'middle', 'font-size': 50, 'font-weight': 700, fill: ground }, phone);
-    k.pen('M262 264 l24 26 52-58', { stroke: ground, 'stroke-width': 7 }, phone);
-    [['M180 110 l-18-8 M176 140 h-22 M180 170 l-18 8'], ['M420 110 l18-8 M424 140 h22 M420 170 l18 8']].forEach(([d]) => k.pen(d, { 'stroke-width': 2.6, class: 'fx-buzz-lines' }));
-  },
-
-  visa: (k) => {
-    const { sk, ink, ground, hatch, muted } = k;
-    sk.rect(40, 40, 250, 170, { fill: ground, fillStyle: 'solid', strokeWidth: 3, seed: 3 });
-    for (let x = 62; x < 290; x += 22) k.pen(`M${x} 44 V206`, { 'stroke-width': 1, opacity: 0.35 });
-    k.mono(165, 30, 'CONSULATE WINDOW', { 'text-anchor': 'middle', 'font-size': 10, fill: muted });
-    const words = k.group({ class: 'fx-words' });
-    k.into(words).path('M300 60 h256 v84 h-200 l-26 22 v-22 h-30z', { fill: ink, fillStyle: 'solid', stroke: ink, seed: 5 });
-    k.hand(428, 112, 'Your visa is approved.', { 'text-anchor': 'middle', 'font-size': 28, fill: ground }, words);
-    sk.rect(70, 238, 92, 58, { fill: ground, fillStyle: 'solid', strokeWidth: 2, seed: 6 });
-    k.mono(116, 262, 'TOKEN', { 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700 });
-    k.mono(116, 284, '• • •', { 'text-anchor': 'middle', 'font-size': 12 });
-    const i20 = k.group({ transform: 'rotate(5 446 310)' });
-    k.into(i20).rect(362, 216, 170, 190, { fill: ink, fillStyle: 'solid', stroke: ink, seed: 9 });
-    k.dot(447, 258, 'I-20', { 'text-anchor': 'middle', 'font-size': 32, fill: ground }, i20);
-    [290, 312, 334, 356].forEach((y) => k.pen(k.scribble(382, y, 130, 1.2), { stroke: ground, 'stroke-width': 1.6 }, i20));
-    const passport = k.group({ transform: 'rotate(-8 256 330)' });
-    k.into(passport).rect(196, 250, 120, 160, { fill: hatch, fillStyle: 'solid', strokeWidth: 3, seed: 7 });
-    k.into(passport).rect(212, 272, 88, 28, { fill: ground, fillStyle: 'solid', stroke: ground, seed: 11 });
-    k.mono(256, 291, 'PASSPORT', { 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700 }, passport);
-    k.into(passport).circle(256, 350, 44, { fill: ground, fillStyle: 'solid', strokeWidth: 2.2, seed: 8 });
-    const stamp = k.group({ class: 'fx-stamp', transform: 'rotate(-14 318 372)' });
-    k.el('rect', { x: 262, y: 350, width: 112, height: 42, rx: 6, fill: ground, stroke: ink, 'stroke-width': 3.5 }, stamp);
-    k.dot(318, 379, 'F-1 VISA', { 'text-anchor': 'middle', 'font-size': 18 }, stamp);
-  },
-
-  packing: (k) => {
-    const { sk, ink, ground, hatch, dots } = k;
-    sk.line(-10, 384, 610, 384, { strokeWidth: 2.4, seed: 2 });
-    [40, 320].forEach((x, i) => {
-      sk.poly([[x, 250], [x + 240, 250], [x + 220, 172], [x + 20, 172]], { fill: hatch, fillStyle: 'solid', strokeWidth: 2.6, seed: 10 + i });
-      sk.rect(x, 250, 240, 124, { fill: ground, fillStyle: 'solid', strokeWidth: 3, seed: 3 + i });
-    });
-    [[58, 270], [140, 270]].forEach(([x, y], i) => {
-      sk.rect(x, y, 72, 62, { fill: i ? dots : ground, fillStyle: 'solid', seed: 20 + i });
-      k.pen(`M${x + 25} ${y} l11 12 11-12`, { 'stroke-width': 2 });
-    });
-    [0, 1, 2].forEach((j) => sk.rect(222, 344 - j * 18, 44, 16, { fill: ground, fillStyle: 'solid', seed: 30 + j }));
-    sk.rect(340, 280, 92, 60, { fill: ink, fillStyle: 'solid', stroke: ink, seed: 40 });
-    sk.circle(386, 310, 42, { fill: ground, fillStyle: 'solid', seed: 41 });
-    sk.circle(386, 310, 20, { fill: hatch, fillStyle: 'solid', seed: 42 });
-    sk.rect(450, 280, 94, 64, { fill: ground, fillStyle: 'solid', seed: 43 });
-    const scale = k.group({ class: 'fx-scale' });
-    k.pen('M300 0 V44', { 'stroke-width': 2 }, scale);
-    k.into(scale).circle(300, 94, 104, { fill: ground, fillStyle: 'solid', strokeWidth: 3, seed: 50 });
-    k.pen('M300 94 L330 70', { 'stroke-width': 3, class: 'fx-needle' }, scale);
-    k.el('circle', { cx: 300, cy: 94, r: 5, fill: ink }, scale);
-    k.dot(300, 128, '23 KG?', { 'text-anchor': 'middle', 'font-size': 18 }, scale);
-    k.pen('M300 146 V168 q0 12 -12 12', { 'stroke-width': 2.4 }, scale);
   },
 
   goodbye: (k) => {
@@ -187,29 +108,4 @@ export const ART = {
     sk.path('M420 300 v-24 h30 v24', { fill: ground, fillStyle: 'solid', seed: 7 });
   },
 
-  landing: (k) => {
-    const { sk, ink, ground, hatch, rnd } = k;
-    sk.rect(330, 44, 240, 336, { fill: ground, fillStyle: 'solid', strokeWidth: 3, seed: 3 });
-    sk.line(450, 44, 450, 380, { strokeWidth: 2.4, seed: 4 });
-    k.mono(450, 32, 'EXIT · BUFFALO', { 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700 });
-    const frost = k.group({ class: 'fx-frost' });
-    for (let i = 0; i < 16; i++) {
-      const x = 350 + rnd() * 200;
-      const y = 64 + rnd() * 296;
-      const r = 5 + rnd() * 7;
-      k.pen(`M${(x - r).toFixed(1)} ${y.toFixed(1)} h${(2 * r).toFixed(1)} M${x.toFixed(1)} ${(y - r).toFixed(1)} v${(2 * r).toFixed(1)} M${(x - r * 0.7).toFixed(1)} ${(y - r * 0.7).toFixed(1)} l${(1.4 * r).toFixed(1)} ${(1.4 * r).toFixed(1)} M${(x + r * 0.7).toFixed(1)} ${(y - r * 0.7).toFixed(1)} l${(-1.4 * r).toFixed(1)} ${(1.4 * r).toFixed(1)}`, { 'stroke-width': 1.4, opacity: 0.75 }, frost);
-    }
-    sk.rect(30, 190, 270, 30, { fill: hatch, fillStyle: 'solid', strokeWidth: 2.4, seed: 6 });
-    sk.rect(30, 220, 270, 160, { fill: ground, fillStyle: 'solid', strokeWidth: 3, seed: 5 });
-    k.dot(165, 172, 'PORT OF ENTRY', { 'text-anchor': 'middle', 'font-size': 22 });
-    const page = k.group({ transform: 'rotate(-6 150 290)' });
-    k.into(page).rect(76, 240, 160, 104, { fill: ink, fillStyle: 'solid', stroke: ink, seed: 7 });
-    [264, 284].forEach((y) => k.pen(k.scribble(92, y, 70, 1), { stroke: ground, 'stroke-width': 1.4 }, page));
-    const stamp = k.group({ class: 'fx-stamp' }, page);
-    k.el('circle', { cx: 186, cy: 304, r: 32, fill: 'none', stroke: ground, 'stroke-width': 3.4 }, stamp);
-    k.mono(186, 308, 'ARRIVED', { 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: ground }, stamp);
-    k.hand(56, 110, 'first cold breath', { 'font-size': 30 });
-    k.pen('M250 96 q30-20 50 0 q24-10 34 12 q-20 22-44 10 q-24 10-40-22z', { 'stroke-width': 2, opacity: 0.7 });
-    sk.line(-10, 380, 610, 380, { strokeWidth: 2.4, seed: 8 });
-  },
 };

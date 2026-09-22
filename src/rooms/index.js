@@ -19,16 +19,19 @@ import { ART, FX, WINGS } from './registry.js';
 
 const attr = (s) => String(s).replace(/"/g, '&quot;');
 
-// A beat's photos, in a row as wide as the beat: one big, two or three side by side at one height, four as a grid.
-// Files that aren't in public/photos drop out (lib/doodle.js), and a row left empty isn't drawn at all.
-function photosHTML(list) {
+// A beat's photos, in a row as wide as the beat: one big, two or three side by side at one height, four as a grid, or
+// (the 'lead' layout) the first across the top and the rest in a row under it, spaced as one grid. Files that aren't in
+// public/photos drop out (lib/doodle.js), and a row left empty isn't drawn at all.
+function photosHTML(list, layout) {
   const frames = (list || []).map((entry) => photo(entry)).filter(Boolean);
-  return frames.length ? `<div class="photos photos--${Math.min(frames.length, 4)}">${frames.join('')}</div>` : '';
+  if (!frames.length) return '';
+  if (layout === 'lead' && frames.length > 1) return `<div class="photos photos--lead">${frames[0]}<div class="photos__row">${frames.slice(1).join('')}</div></div>`;
+  return `<div class="photos photos--${Math.min(frames.length, 4)}">${frames.join('')}</div>`;
 }
 
 function beatHTML(beat, i) {
   // A photo section of its own: just the pictures.
-  if (!beat.art && !beat.title) return `<li class="beat beat--photos" data-beat="${i}">${photosHTML(beat.photos)}</li>`;
+  if (!beat.art && !beat.title) return `<li class="beat beat--photos" data-beat="${i}">${photosHTML(beat.photos, beat.photoLayout)}</li>`;
   // A beat without a drawing is its words, then its photos.
   const stage = beat.art ? `
       <div class="beat__stage">
@@ -45,7 +48,7 @@ function beatHTML(beat, i) {
   return `
     <li class="beat" data-beat="${i}" ${beat.full ? 'data-full' : ''}>
       ${beat.copyFirst ? copy + stage : stage + copy}
-      ${photosHTML(beat.photos)}
+      ${photosHTML(beat.photos, beat.photoLayout)}
     </li>`;
 }
 
@@ -64,7 +67,6 @@ function roomHTML(room, prev, next) {
       <div class="room__inner wrap">
         <aside class="room__plaque">
           <div class="room__card">
-            <p class="mono room__kicker"><span>No. ${room.no}</span><span>${room.time}</span></p>
             <h2 class="t-h1 room__title" id="${room.id}-title">${room.title}</h2>
             <p class="mono room__meta">${room.place} · ${room.dates}</p>
             ${room.proof?.length ? `<ul class="room__proof">${room.proof.map((p) => `<li>${p}</li>`).join('')}</ul>` : ''}
@@ -169,7 +171,7 @@ export function init(stop) {
         if (beat.effect && FX[beat.effect]) FX[beat.effect](beatEl, { ...ctx, beat, svg, fx: beatEl.querySelector('.beat__fx') });
       }
 
-      const parts = beatEl.querySelectorAll('.beat__stage, .beat__copy > *, .photos > .photo');
+      const parts = beatEl.querySelectorAll('.beat__stage, .beat__copy > *, .photos .photo');
       if (!quiet) gsap.set(parts, { y: 36, autoAlpha: 0 });
       ScrollTrigger.create({
         trigger: beatEl, start: 'top 80%', once: true,

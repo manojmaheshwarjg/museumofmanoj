@@ -143,7 +143,8 @@ export const WINGS = {
     init: (el, room, { kit, quiet }) => {
       el.querySelectorAll('.exhibit').forEach((node, i) => {
         const ex = room.exhibits[i];
-        DRAW[ex.art]?.(kit(node.querySelector('.exhibit__art'), room.tone));
+        // The exhibits hang as light canvases, so they're drawn in ink whatever the room.
+        DRAW[ex.art]?.(kit(node.querySelector('.exhibit__art'), 'paper'));
         if (!quiet) {
           gsap.fromTo(node.querySelector('.exhibit__spot'), { opacity: 0 }, {
             opacity: 1, ease: 'none', scrollTrigger: { trigger: node, start: 'top 90%', end: 'top 35%', scrub: true },
@@ -151,7 +152,7 @@ export const WINGS = {
         }
         if (!ex.cover) return;
         const cloth = node.querySelector('.exhibit__cloth');
-        drawCloth(kit(cloth, room.tone));
+        drawCloth(kit(cloth, 'paper'));
         const button = node.querySelector('.exhibit__lift');
         button.addEventListener('click', () => {
           const open = button.getAttribute('aria-pressed') !== 'true';

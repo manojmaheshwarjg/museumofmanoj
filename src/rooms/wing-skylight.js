@@ -1,19 +1,15 @@
 // Room 12 · Skylight: what's next. A skylight opens onto a New York dawn.
-// A gallery boarded up for your team with the 90-day plan pasted on the hoarding, the availability
-// plaque, a guestbook, the gift shop, and the street outside where the billboard says goodbye.
+// A gallery boarded up for your team, the gift shop (the resume first), the availability plaque, and the street
+// outside where the billboard says goodbye.
 
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { manojSVG, mountManoj } from '../character/manoj.js';
+import { mountManoj } from '../character/manoj.js';
 import { state, on, formatVisitor, ROOM_COUNT } from '../lib/state.js';
-import { LOGO_HTML, drawLogo } from '../lib/logo.js';
+import { LOGO_HTML } from '../lib/logo.js';
 import { openResume } from '../lib/resume.js';
 
-const BOOK_KEY = 'manoj-museum:guestbook';
 const MODE = { full: 'full tour', express: 'express tour', resume: 'just the resume' };
-const readNotes = () => { try { return JSON.parse(localStorage.getItem(BOOK_KEY)) || []; } catch { return []; } };
-const saveNotes = (notes) => { try { localStorage.setItem(BOOK_KEY, JSON.stringify(notes.slice(-20))); } catch { /* private mode */ } };
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export function download(blob, name) {
   const url = URL.createObjectURL(blob);
@@ -29,34 +25,6 @@ export const vcard = (c) => [
   `EMAIL;TYPE=INTERNET:${c.email}`, `TEL;TYPE=CELL:${c.phone}`, `URL:${c.site}`, 'END:VCARD',
 ].join('\r\n');
 
-// Renders the doodle guide onto a phone-sized wallpaper.
-export async function wallpaper() {
-  const W = 1170;
-  const H = 2532;
-  const canvas = Object.assign(document.createElement('canvas'), { width: W, height: H });
-  const c = canvas.getContext('2d');
-  c.fillStyle = '#F1EDE3';
-  c.fillRect(0, 0, W, H);
-  c.fillStyle = 'rgba(14, 13, 11, .14)';
-  for (let x = 30; x < W; x += 54) for (let y = 30; y < H; y += 54) { c.beginPath(); c.arc(x, y, 3, 0, Math.PI * 2); c.fill(); }
-  const css = document.getElementById('manoj-character-style')?.textContent || '';
-  const defs = document.querySelector('#fx-defs defs')?.innerHTML || '';
-  const markup = manojSVG({ pose: 'wave' }).trim()
-    .replace(/<svg([^>]*)>/, `<svg xmlns="http://www.w3.org/2000/svg" width="880" height="1488"$1><style>${css}</style><defs>${defs}</defs>`);
-  const img = new Image();
-  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
-  await img.decode();
-  c.drawImage(img, (W - 880) / 2, 640, 880, 1488);
-  c.fillStyle = '#0E0D0B';
-  c.textAlign = 'center';
-  drawLogo(c, W / 2, 360, 84, '#0E0D0B');
-  c.font = '500 66px Caveat, cursive';
-  c.fillText(`visitor ${formatVisitor(state.visitor)} was here`, W / 2, 470);
-  c.font = '400 34px "JetBrains Mono", monospace';
-  c.fillText('manoj.ai', W / 2, H - 180);
-  await new Promise((resolve) => canvas.toBlob((blob) => { if (blob) download(blob, 'doodle-manoj-wallpaper.png'); resolve(); }, 'image/png'));
-}
-
 function drawSkylight(k) {
   const { sk, ink, ground, hatch } = k;
   k.el('ellipse', { cx: 300, cy: 206, rx: 268, ry: 178 }, k.el('clipPath', { id: 'skylight-clip' }, k.el('defs')));
@@ -68,10 +36,18 @@ function drawSkylight(k) {
     const a = Math.PI + (i / 11) * Math.PI;
     k.pen(`M${(300 + Math.cos(a) * 92).toFixed(1)} ${(300 + Math.sin(a) * 92).toFixed(1)} L${(300 + Math.cos(a) * 126).toFixed(1)} ${(300 + Math.sin(a) * 126).toFixed(1)}`, { 'stroke-width': 3 }, sun);
   }
+  // The skyline, with a window lit here and there: warm yellows and the odd blue, like the street outside.
+  const LIT = ['#E3B55A', '#EFCB7A', '#D99A4E', '#86A8DE'];
   let x = 24;
   [90, 140, 70, 180, 110, 60, 150, 96, 130, 76, 160, 88].forEach((h, i) => {
     const w = 34 + (i % 3) * 10;
     k.into(sky).rect(x, 384 - h, w, h + 40, { fill: ink, fillStyle: 'solid', stroke: ink, seed: 20 + i });
+    for (let wy = 394 - h; wy < 392; wy += 12) {
+      for (let wx = x + 5; wx + 9 <= x + w; wx += 9) {
+        const lit = k.rnd() < 0.34;
+        k.el('rect', { x: wx, y: wy, width: 5, height: 7, fill: lit ? LIT[Math.floor(k.rnd() * LIT.length)] : 'rgba(14, 13, 11, .45)' }, sky);
+      }
+    }
     x += w + 4;
   });
   const panes = [0, 300].map((px) => {
@@ -93,16 +69,8 @@ const hoardingHTML = (room) => `
       <div class="poster poster--big">
         <p class="dotf poster__coming">COMING SOON</p>
         <h3 class="poster__team" id="hoarding-title">YOUR TEAM</h3>
-        <p class="mono">This gallery is boarded up for whoever I build with next. The plan is already pasted on the wall.</p>
+        <p class="mono">This gallery is boarded up for whoever I build with next.</p>
       </div>
-      ${room.plan.map((p, i) => `
-        <article class="poster" style="--tilt:${[-1.4, 1.1, -0.7][i]}deg">
-          <p class="mono poster__days">${p.days}</p>
-          <h4 class="poster__phase">${p.phase}</h4>
-          <p class="poster__goal">${p.goal}</p>
-          <ul class="poster__steps">${p.steps.map((s) => `<li>${s}</li>`).join('')}</ul>
-          <p class="poster__result"><span class="mono">By day ${(i + 1) * 30}</span>${p.result}</p>
-        </article>`).join('')}
     </div>
     <div class="hoarding__tape" aria-hidden="true"></div>
   </section>`;
@@ -115,24 +83,8 @@ const plaqueHTML = (room) => `
     <div class="plaque__actions">
       <a class="btn" href="mailto:${room.contact.email}">Email me</a>
       <a class="btn btn--ghost" href="tel:${room.contact.phone.replace(/[^+\d]/g, '')}">${room.contact.phone}</a>
-      <a class="btn btn--ghost" href="${room.contact.site}" target="_blank" rel="noopener">manoj.ai</a>
+      <a class="btn btn--ghost" href="${room.contact.github}" target="_blank" rel="noopener">GitHub</a>
     </div>
-    <p class="mono plaque__email">${room.contact.email}</p>
-  </section>`;
-
-const guestbookHTML = () => `
-  <section class="guestbook" aria-labelledby="guestbook-title">
-    <div class="guestbook__head">
-      <p class="mono">The guestbook</p>
-      <h3 class="t-h2" id="guestbook-title">Sign before you go.</h3>
-      <p class="guestbook__note">Notes stay on this device until the public guestbook is switched on.</p>
-    </div>
-    <form class="guestbook__form" data-guestbook>
-      <label><span class="mono">Your note</span><textarea name="note" maxlength="180" rows="3" required placeholder="The leap got me."></textarea></label>
-      <label><span class="mono">Signed</span><input name="name" maxlength="30" autocomplete="given-name" placeholder="visitor ${formatVisitor(state.visitor)}"></label>
-      <button class="btn btn--ink" type="submit">Sign the guestbook</button>
-    </form>
-    <ol class="guestbook__page" data-notes></ol>
   </section>`;
 
 const giftHTML = () => `
@@ -140,9 +92,8 @@ const giftHTML = () => `
     <p class="mono">The gift shop</p>
     <h3 class="t-h2" id="gift-title">Take something home.</h3>
     <ul class="gift__shelf">
-      <li class="gift__item"><span class="gift__icon" aria-hidden="true">PDF</span><h4>The resume</h4><p>One page, every stop.</p><button class="btn btn--ink" type="button" data-resume>View</button></li>
-      <li class="gift__item"><span class="gift__icon" aria-hidden="true">VCF</span><h4>Contact card</h4><p>Straight into your phone.</p><button class="btn btn--ink" type="button" data-vcard>Save the card</button></li>
-      <li class="gift__item"><span class="gift__icon" aria-hidden="true">PNG</span><h4>Doodle wallpaper</h4><p>Your guide, on your lock screen.</p><button class="btn btn--ink" type="button" data-wallpaper>Make wallpaper</button></li>
+      <li class="gift__item"><span class="hand gift__tag" aria-hidden="true">start here</span><span class="gift__icon" aria-hidden="true">PDF</span><div class="gift__copy"><h4>The resume</h4><p>One page, every stop.</p></div><button class="btn btn--ink" type="button" data-resume>View the resume</button></li>
+      <li class="gift__item"><span class="gift__icon" aria-hidden="true">VCF</span><div class="gift__copy"><h4>Contact card</h4><p>Straight into your phone.</p></div><button class="btn btn--ink" type="button" data-vcard>Save the card</button></li>
     </ul>
   </section>`;
 
@@ -182,9 +133,8 @@ export const WINGS = {
       <div class="skylight">
         <svg class="skylight__art" viewBox="0 0 600 420" role="img" aria-label="A skylight opening onto a New York dawn"></svg>
         ${hoardingHTML(room)}
-        ${plaqueHTML(room)}
-        ${guestbookHTML()}
         ${giftHTML()}
+        ${plaqueHTML(room)}
         ${exitHTML()}
       </div>`,
 
@@ -204,45 +154,13 @@ export const WINGS = {
         });
       }
 
-      const form = el.querySelector('[data-guestbook]');
-      const page = el.querySelector('[data-notes]');
-      const paintNotes = () => {
-        const notes = readNotes();
-        page.innerHTML = notes.length
-          ? notes.slice().reverse().map((n, i) => `<li style="--tilt:${i % 2 ? 0.6 : -0.6}deg"><span class="hand">${esc(n.note)}</span><span class="mono">${esc(n.name)} · ${esc(n.date)}</span></li>`).join('')
-          : '<li class="guestbook__empty"><span class="hand">No notes on this device yet. Be the first.</span></li>';
-      };
-      paintNotes();
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const data = new FormData(form);
-        const note = String(data.get('note') || '').trim();
-        if (!note) return;
-        const notes = readNotes();
-        notes.push({
-          note: note.slice(0, 180),
-          name: String(data.get('name') || '').trim().slice(0, 30) || `visitor ${formatVisitor(state.visitor)}`,
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        });
-        saveNotes(notes);
-        form.reset();
-        paintNotes();
-      });
-
       el.querySelector('[data-resume]').addEventListener('click', (e) => openResume(e.currentTarget));
       el.querySelector('[data-vcard]').addEventListener('click', () => download(new Blob([vcard(room.contact)], { type: 'text/vcard' }), 'manoj-maheshwar-jagadeesan.vcf'));
-      el.querySelector('[data-wallpaper]').addEventListener('click', async (e) => {
-        const button = e.currentTarget;
-        button.disabled = true;
-        button.textContent = 'Drawing...';
-        try { await wallpaper(); button.textContent = 'Saved. Make another'; } catch (err) { button.textContent = 'Try again'; console.warn('[museum] wallpaper failed', err); } finally { button.disabled = false; }
-      });
 
       mountManoj(el.querySelector('.exit__guide'), { pose: 'wave', label: 'Doodle Manoj waving goodbye' });
       paintReceipt(el);
       on((type) => {
         if (type === 'punch' || type === 'ticket' || type === 'visitor') paintReceipt(el);
-        if (type === 'visitor') el.querySelector('[data-guestbook] input[name="name"]').placeholder = `visitor ${formatVisitor(state.visitor)}`;
       });
       ScrollTrigger.create({ trigger: el.querySelector('.exit'), start: 'top 85%', onEnter: () => paintReceipt(el) });
     },

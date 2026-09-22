@@ -121,25 +121,6 @@ function marksSVG([w, h], { faces = [], note } = {}) {
   return `<svg class="photo__marks" viewBox="0 0 ${w} ${h}" aria-hidden="true">${out}</svg>`;
 }
 
-// How bright a photo is on average, from 0 to 1, read off a tiny copy of it.
-function lightOf(img) {
-  try {
-    const size = 32;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const g = canvas.getContext('2d', { willReadFrequently: true });
-    g.imageSmoothingQuality = 'high';
-    g.drawImage(img, 0, 0, size, size);
-    const px = g.getImageData(0, 0, size, size).data;
-    let sum = 0;
-    for (let i = 0; i < px.length; i += 4) sum += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
-    return sum / (px.length / 4) / 255;
-  } catch {
-    return 0.5;
-  }
-}
-
 // The faces a marked photo keeps in colour: a second copy of the picture over the first, showing only through soft
 // ovals around each face, so when the rest goes black and white they stay as they were.
 function spotlight(box, img) {
@@ -157,9 +138,58 @@ function spotlight(box, img) {
   return spot;
 }
 
+// Photos come to life two ways, and neither with reduced motion. The first time one comes into view it develops like
+// instant film: out of focus, then sharp in black and white, then its colour. And now and then one print
+// on screen catches a breeze: it lifts a little where it hangs, sways and settles.
+const DEVELOP = [
+  { filter: 'grayscale(1) blur(10px)', transform: 'scale(1.08)' },
+  { filter: 'grayscale(1) blur(0px)', transform: 'scale(1)', offset: 0.4 },
+  { filter: 'grayscale(1) blur(0px)', transform: 'scale(1)', offset: 0.64 },
+  { filter: 'grayscale(0) blur(0px)', transform: 'scale(1)' },
+];
+// A marked photo's background stays black and white under its marks, so it develops only that far.
+const DEVELOP_GRAY = DEVELOP.slice(0, 3).concat({ filter: 'grayscale(1) blur(0px)', transform: 'scale(1)' });
+const SWAY = [
+  { transform: 'none' },
+  { transform: 'translateY(-3px) rotate(-1.8deg)', offset: 0.2 },
+  { transform: 'translateY(-2px) rotate(1.3deg)', offset: 0.45 },
+  { transform: 'rotate(-.6deg)', offset: 0.7 },
+  { transform: 'none' },
+];
+const FLUTTER = [{ transform: 'none' }, { transform: 'rotate(-4deg) scaleY(1.15)', offset: 0.25 }, { transform: 'rotate(4deg) scaleY(.9)', offset: 0.55 }, { transform: 'none' }];
+const hanging = new Set();
+let breezeWatch = null;
+let breezeTimer = 0;
+
+function sway(figure) {
+  figure.animate(SWAY, { duration: 2600, easing: 'ease-in-out' });
+  // The cover hangs by a strip of tape, and the tape flutters with it.
+  if (figure.closest('.room__cover')) figure.animate(FLUTTER, { duration: 2600, easing: 'ease-in-out', pseudoElement: '::before' });
+}
+
+// Every 8 to 14 seconds, one print on screen that isn't still developing.
+function breezeLater() {
+  clearTimeout(breezeTimer);
+  breezeTimer = setTimeout(() => {
+    const ready = [...hanging].filter((f) => f.isConnected && !f.dataset.developing);
+    if (ready.length && !document.hidden) sway(ready[Math.floor(Math.random() * ready.length)]);
+    breezeLater();
+  }, 8000 + Math.random() * 6000);
+}
+
+function hangInBreeze(figure) {
+  breezeWatch ||= new IntersectionObserver((entries) => entries.forEach((entry) => {
+    if (entry.isIntersecting) hanging.add(entry.target); else hanging.delete(entry.target);
+  }), { threshold: 0.6 });
+  breezeWatch.observe(figure);
+  if (!breezeTimer) breezeLater();
+}
+
 // Loads each photo as it nears the screen, from the site root, so the stops' own pages (/experience/...) find them too.
-// Hover (or tap) shows the picture without its film treatment. A marked photo draws its marks once it's well in view.
+// It waits undeveloped until it's in view, then develops. Hover (or tap) shows the picture without its film treatment.
+// A marked photo starts drawing its marks as it arrives, while it develops: its faces come up in colour inside them.
 export function loadPhotos(root = document) {
+  const still = reducedMotion();
   const marking = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
@@ -167,6 +197,26 @@ export function loadPhotos(root = document) {
       entry.target.classList.add('is-marked');
     });
   }, { threshold: 0.55 });
+  const develop = (box) => {
+    const figure = box.closest('.photo');
+    const marked = Boolean(box.dataset.spots);
+    box.classList.remove('is-latent');
+    figure.dataset.developing = '1';
+    if (marked) figure.classList.add('is-marked');
+    const runs = [...box.querySelectorAll('img')].map((img) => {
+      const frames = marked && !img.classList.contains('photo__spot') ? DEVELOP_GRAY : DEVELOP;
+      return img.animate(frames, { duration: 5200, easing: 'cubic-bezier(.35, .1, .5, 1)', fill: 'backwards' });
+    });
+    const developed = () => { delete figure.dataset.developing; };
+    Promise.all(runs.map((run) => run.finished)).then(developed, developed);
+  };
+  const arrivals = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      arrivals.unobserve(entry.target);
+      develop(entry.target);
+    });
+  }, { threshold: 0.35 });
   const io = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
@@ -177,16 +227,18 @@ export function loadPhotos(root = document) {
       img.alt = box.getAttribute('aria-label') || '';
       img.src = `/photos/${encodeURIComponent(box.dataset.photo)}`;
       img.decode().then(() => {
-        // A dark photo is lifted into the same light as the rest, and a bright one gets less of the film haze, so it
-        // keeps its snap.
-        const light = Math.max(lightOf(img), 0.01);
-        box.style.setProperty('--exposure', Math.min(1.25, Math.max(1, (0.5 / light) ** 0.65)).toFixed(3));
-        box.style.setProperty('--haze', Math.min(1, Math.max(0.35, 1.5 - light * 1.3)).toFixed(2));
         box.prepend(img);
         if (box.dataset.spots) img.after(spotlight(box, img));
+        if (!still) box.classList.add('is-latent');
         requestAnimationFrame(() => {
           box.classList.remove('is-empty');
-          if (box.dataset.spots) marking.observe(box.closest('.photo'));
+          const figure = box.closest('.photo');
+          if (still) {
+            if (box.dataset.spots) marking.observe(figure);
+            return;
+          }
+          arrivals.observe(box);
+          hangInBreeze(figure);
         });
       }, () => box.closest('.photo')?.classList.add('is-missing'));
     });
